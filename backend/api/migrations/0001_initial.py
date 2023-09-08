@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='FileDB',
+            name='Files',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=100)),
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='PassDB',
+            name='Pass',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=100)),
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='UserDB',
+            name='Users',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('username', models.CharField(max_length=100)),

@@ -1,24 +1,24 @@
 from rest_framework import serializers
-from .models import PassDB, SecNotesDB, CardsDB, FileDB
+from .models import Pass, SecNotes, Cards, Files
 
 
-class PassDBSerializer(serializers.ModelSerializer):
+class PassSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PassDB
+        model = Pass
         fields = '__all__'
 
-class SecNotesDBSerializer(serializers.ModelSerializer):
+class SecNotesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SecNotesDB
+        model = SecNotes
         fields = '__all__'
 
-class CardsDBSerializer(serializers.ModelSerializer):
+class CardsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CardsDB
+        model = Cards
         fields = '__all__'
 
-class FileDBSerializer(serializers.ModelSerializer):
+class FilesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FileDB
+        model = Files
         fields = '__all__'
 

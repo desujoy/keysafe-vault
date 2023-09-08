@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='CardsDB',
+            name='Cards',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=100)),
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='SecNotesDB',
+            name='SecNotes',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=100)),
@@ -32,10 +32,10 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.DeleteModel(
-            name='UserDB',
+            name='Users',
         ),
         migrations.RemoveField(
-            model_name='passdb',
+            model_name='Pass',
             name='email',
         ),
     ]

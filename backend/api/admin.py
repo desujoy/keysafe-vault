@@ -1,10 +1,10 @@
 from django.contrib import admin
-from .models import PassDB,SecNotesDB,CardsDB, FileDB
+from .models import Pass,SecNotes,Cards, Files
 
-admin.site.register(PassDB)
-admin.site.register(SecNotesDB)
-admin.site.register(CardsDB)
-admin.site.register(FileDB)
+admin.site.register(Pass)
+admin.site.register(SecNotes)
+admin.site.register(Cards)
+admin.site.register(Files)
 
 
 # Register your models here.

@@ -1,22 +1,22 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .serializer import PassDBSerializer,SecNotesDBSerializer,CardsDBSerializer, FileDBSerializer
-from .models import PassDB,SecNotesDB,CardsDB, FileDB
+from .serializer import PassSerializer,SecNotesSerializer,CardsSerializer, FilesSerializer
+from .models import Pass,SecNotes,Cards, Files
 # Create your views here.
 
-class PassDBViewSet(viewsets.ModelViewSet):
-    queryset = PassDB.objects.all()
-    serializer_class = PassDBSerializer
+class PassViewSet(viewsets.ModelViewSet):
+    queryset = Pass.objects.all()
+    serializer_class = PassSerializer
 
-class SecNotesDBViewSet(viewsets.ModelViewSet):
-    queryset = SecNotesDB.objects.all()
-    serializer_class = SecNotesDBSerializer
+class SecNotesViewSet(viewsets.ModelViewSet):
+    queryset = SecNotes.objects.all()
+    serializer_class = SecNotesSerializer
 
-class CardsDBViewSet(viewsets.ModelViewSet):
-    queryset = CardsDB.objects.all()
-    serializer_class = CardsDBSerializer
+class CardsViewSet(viewsets.ModelViewSet):
+    queryset = Cards.objects.all()
+    serializer_class = CardsSerializer
 
-class FileDBViewSet(viewsets.ModelViewSet):
-    queryset = FileDB.objects.all()
-    serializer_class = FileDBSerializer
+class FilesViewSet(viewsets.ModelViewSet):
+    queryset = Files.objects.all()
+    serializer_class = FilesSerializer
 
