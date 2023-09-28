@@ -29,6 +29,7 @@ urlpatterns = [
     path('users/', views.UsersViewSet.as_view({'get': 'list'})),
     path('users/add/', views.UsersViewSet.as_view({'post': 'create'})), 
     path('users/update/<int:pk>/', views.UsersViewSet.as_view({'put': 'update'})),
-    path('users/delete/<int:pk>/', views.UsersViewSet.as_view({'delete': 'destroy'}))
+    path('users/delete/<int:pk>/', views.UsersViewSet.as_view({'delete': 'destroy'})),
+    path('genkeypass/', views.genkeypass, name='genkeypass')
     
 ]

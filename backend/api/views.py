@@ -2,6 +2,9 @@ from django.shortcuts import render
 from rest_framework import viewsets,response
 from .serializer import PassSerializer,SecNotesSerializer,CardsSerializer, FilesSerializer, UsersSerializer
 from .models import Pass,SecNotes,Cards, Files, Users
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .enc.algo import genKeyPass
 # Create your views here.
 
 Response = response.Response
@@ -42,3 +45,15 @@ class FilesViewSet(viewsets.ModelViewSet):
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()
     serializer_class = UsersSerializer
+
+@csrf_exempt
+def genkeypass(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', None)
+        password = request.POST.get('password', None)
+        if username is None or password is None:
+            return JsonResponse({'username':'This field is required', 'password':'This field is required'})
+        enc_blob=genKeyPass(username, password)
+        return JsonResponse({'keypass':enc_blob.decode('utf-8')})
+    else:
+        return JsonResponse({'error': 'invalid request'})
