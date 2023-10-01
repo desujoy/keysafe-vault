@@ -1,0 +1,24 @@
+GET /api/pass/ - SELECT id,name,username FROM Pass
+GET /api/pass/<int:pk>/ - SELECT id,name,username,password,website,notes FROM Pass
+POST /api/pass/add/ - INSERT INTO Pass VALUES (res.name,res.username,res.password,res.website,res.notes) - response {messege:"Added successfully", id:new_id}
+PUT /api/pass/update/<int:pk>/ - UPDATE Pass SET (name=res.name,username=res.username,password=res.password,website=res.website,notes=res.notes) WHERE id=res.id - response {messege:"Updated successfully"}
+DELETE /api/pass/delete/<int:pk>/ - DELETE FROM Pass WHERE id=res.id
+
+similarly with -
+
+/api/notes/
+/api/notes/<int:pk>/
+/api/notes/add/
+/api/notes/update/<int:pk>/
+/api/notes/delete/<int:pk>/
+
+/api/cards/
+/api/cards/<int:pk>/
+/api/cards/add/
+/api/cards/update/<int:pk>/
+/api/cards/delete/<int:pk>/
+
+/api/files/
+/api/files/<int:pk>/
+/api/files/add/
+/api/files/delete/<int:pk>/
