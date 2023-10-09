@@ -1,10 +1,13 @@
 const express = require("express");
 const axios = require("axios");
 const User = require("../models/user");
+const cors = require("cors");
 const { BACKEND_URL } = require("../connection");
 
 const router = express.Router();
+router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
+router.use(cors()); 
 
 router.route("/register").post(async (req, res) => {
   const { username, password } = req.body;
