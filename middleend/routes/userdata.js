@@ -17,9 +17,14 @@ router
       const passwords = await axios
         .get(`${BACKEND_URL}/api/pass/user/${user.userID}`)
         .catch(function (error) {
-          console.error(error);
+          console.log(error);
+          res.status(404).send(`Passwords not found!`);
         });
-      res.send(passwords.data);
+      if (passwords.status === 200) {
+        res.send(passwords.data);
+      } else {
+        res.status(404).send(`Passwords not found!`);
+      }
     } else {
       res.status(404).send(`User not found!`);
     }
@@ -28,6 +33,9 @@ router
     const { loggedInUser, name, password, username, website } = req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "POST",
@@ -44,14 +52,20 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Passwords not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .put(async (req, res) => {
     const { loggedInUser, name, password, username, website, id } = req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "PUT",
@@ -68,9 +82,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Passwords not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .delete(async (req, res) => {
     const { id } = req.body;
@@ -82,9 +99,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Passwords not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   });
 
 router
@@ -96,9 +116,14 @@ router
       const cards = await axios
         .get(`${BACKEND_URL}/api/cards/user/${user.userID}`)
         .catch(function (error) {
-          console.error(error);
+          console.log(error);
+          res.status(404).send(`Cards not found!`);
         });
-      res.send(cards.data);
+      if (cards.status === 200) {
+        res.send(cards.data);
+      } else {
+        res.status(404).send(`Cards not found!`);
+      }
     } else {
       res.status(404).send(`User not found!`);
     }
@@ -108,6 +133,9 @@ router
       req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "POST",
@@ -125,15 +153,28 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Cards not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .put(async (req, res) => {
-    const { loggedInUser, name, card_number, card_type, card_cvv, card_exp, id } =
-      req.body;
+    const {
+      loggedInUser,
+      name,
+      card_number,
+      card_type,
+      card_cvv,
+      card_exp,
+      id,
+    } = req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "PUT",
@@ -151,9 +192,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Cards not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .delete(async (req, res) => {
     const { id } = req.body;
@@ -165,9 +209,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Cards not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   });
 
 router
@@ -179,9 +226,14 @@ router
       const cards = await axios
         .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
         .catch(function (error) {
-          console.error(error);
+          console.log(error);
+          res.status(404).send(`Notes not found!`);
         });
-      res.send(cards.data);
+      if (cards.status === 200) {
+        res.send(cards.data);
+      } else {
+        res.status(404).send(`Notes not found!`);
+      }
     } else {
       res.status(404).send(`User not found!`);
     }
@@ -190,6 +242,9 @@ router
     const { loggedInUser, notename, content } = req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "POST",
@@ -204,14 +259,20 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Notes not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .put(async (req, res) => {
     const { loggedInUser, notename, content, id } = req.body;
     const user = await User.findOne({ username: loggedInUser });
     console.log(user);
+    if (!user) {
+      res.status(404).send(`User not found!`);
+    }
     const owner_id = user.userID;
     var options = {
       method: "PUT",
@@ -226,9 +287,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Notes not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   })
   .delete(async (req, res) => {
     const { id } = req.body;
@@ -240,9 +304,12 @@ router
       },
     };
     const response = await axios.request(options).catch(function (error) {
-      console.error(error);
+      console.log(error);
+      res.status(404).send(`Notes not found!`);
     });
-    res.send(response.data);
+    if (response) {
+      res.send(response.data);
+    }
   });
 
 module.exports = router;

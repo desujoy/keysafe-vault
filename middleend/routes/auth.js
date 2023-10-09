@@ -11,6 +11,9 @@ router.use(cors());
 
 router.route("/register").post(async (req, res) => {
   const { username, password } = req.body;
+  if (!username || !password) {
+    res.status(400).send("Username or password not provided!");
+  }
   console.log(username);
   console.log(password);
   const response = await axios.post(`${BACKEND_URL}/api/users/add/`, {
@@ -35,6 +38,9 @@ router.route("/register").post(async (req, res) => {
 
 router.route("/login").post(async (req, res) => {
   const { username, password } = req.body;
+  if (!username || !password) {
+    res.status(400).send("Username or password not provided!");
+  }
   const user = await User.findOne({ username: username, password: password });
   if (user) {
     res.send(`User logged in!`);
