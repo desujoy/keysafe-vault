@@ -1,0 +1,22 @@
+<%- include('header.ejs') %>
+
+<h1>Register</h1>
+<form action="/auth/register" method="post" hx-target="next div" >
+    <div>
+        <label>Username:</label>
+        <input type="text" name="username" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <input type="text" name="email" />
+    </div>
+    <div>
+        <label>Password:</label>
+        <input type="password" name="password" />
+    </div>
+    <div>
+        <input type="submit" value="Register" />
+    </div>
+</form>
+<div></div>
+<%- include('footer.ejs') %>

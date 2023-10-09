@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const auth = require('./routes/auth');
 const userdata = require('./routes/userdata');
+const application = require('./routes/app');
 const cors = require('cors');
 const { MONGO_URL, PORT, connectMongo } = require('./connection');
 
@@ -14,6 +15,7 @@ connectMongo(MONGO_URL).then(() => {
     console.log('Error connecting to MongoDB', err);
   });
 
+app.use('/', application);
 app.use('/auth', auth);
 app.use('/data', userdata);
 
