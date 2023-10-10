@@ -1,7 +1,7 @@
 <%- include('header.ejs') %>
 
 <h1>Register</h1>
-<form action="/auth/register" method="post" hx-target="next div" >
+<form action="/register" method="post">
     <div>
         <label>Username:</label>
         <input type="text" name="username" />
@@ -18,5 +18,10 @@
         <input type="submit" value="Register" />
     </div>
 </form>
-<div></div>
+<a href="/login">Login</a>
+<% if (error) {  %>
+    <div class="error">
+        Error: <%= error %>
+    </div>
+<% } %>
 <%- include('footer.ejs') %>
