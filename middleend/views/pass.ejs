@@ -1,5 +1,4 @@
 <%- include('header.ejs') %>
-
     <h1>Create Password:</h1>
     <form action="/pass" method="post">
         <div>
@@ -27,12 +26,12 @@
     </div>
 
     <h1>
-        <%= type+'s' %>
+        Passwords
     </h1>
     <% if ( data !=null) { %>
         <% for (let i=0; i < data.length; i++) { %>
             <h2>
-                <%= type %>
+                Password
                 <%= i + 1 %>
             </h2>
             <div id="password-<%= i+1 %>">

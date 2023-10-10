@@ -112,7 +112,7 @@ router
           });
         if (passwords.status === 200) {
           // console.log(passwords.data);
-          res.render("data.ejs", {
+          res.render("pass.ejs", {
             type: "Password",
             data: passwords.data,
             error: null,
@@ -153,7 +153,7 @@ router
       };
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
-        res.render("data.ejs", {
+        res.render("pass.ejs", {
           type: "Password",
           data: null,
           error: "Passwords not found!",
@@ -205,7 +205,7 @@ router
       };
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
-        res.render("data.ejs", {
+        res.render("pass.ejs", {
           type: "Password",
           data: null,
           error: "Passwords not found!",
