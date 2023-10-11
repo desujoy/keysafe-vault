@@ -1,21 +1,25 @@
 <%- include('header.ejs') %>
-    <h1>Create Password:</h1>
-    <form action="/pass" method="post">
+    <h1>Create Cards:</h1>
+    <form action="/cards" method="post">
         <div>
             <label>Name:</label>
             <input type="text" name="name" />
         </div>
         <div>
-            <label>Password:</label>
-            <input type="text" name="password" />
+            <label>Card Number:</label>
+            <input type="text" name="card_number" />
         </div>
         <div>
-            <label>Username:</label>
-            <input type="text" name="username" />
+            <label>Card Type:</label>
+            <input type="text" name="card_type" />
         </div>
         <div>
-            <label>Website:</label>
-            <input type="text" name="website" />
+            <label>Card Expiry:</label>
+            <input type="text" name="card_exp" />
+        </div>
+        <div>
+            <label>CVV:</label>
+            <input type="text" name="card_cvv" />
         </div>
         <div>
             <input type="submit" value="Create" />
@@ -26,40 +30,46 @@
     </div>
 
     <h1>
-        Passwords
+        Cards
     </h1>
     <% if ( data !=null) { %>
         <% for (let i=0; i < data.length; i++) { %>
             <h2>
-                Password
+                Card
                 <%= i + 1 %>
             </h2>
             <div id="data-<%= i+1 %>">
                 <p>Name: <%= data[i].name %>
                 </p>
-                <p class="password">Password: <%= data[i].password %>
+                <p>Card Number: <%= data[i].card_number %>
                 </p>
-                <p>Username: <%= data[i].username %>
+                <p>Card Type: <%= data[i].card_type %>
                 </p>
-                <p>Website: <%= data[i].website %>
+                <p>Card Expiry: <%= data[i].card_exp %>
+                </p>
+                <p>CVV: <%= data[i].card_cvv %>
                 </p>
             </div>
-            <form id='editor-<%= i+1 %>' action="/pass" method="post" style="display: none;">
+            <form id='editor-<%= i+1 %>' action="/cards" method="post" style="display: none;">
                 <div>
                     <label>Name:</label>
                     <input type="text" name="name" value="<%= data[i].name %>" />
                 </div>
                 <div>
-                    <label>Password:</label>
-                    <input type="text" name="password" value="<%= data[i].password %>" />
+                    <label>Card Number:</label>
+                    <input type="text" name="card_number" value="<%= data[i].card_number %>" />
                 </div>
                 <div>
-                    <label>Username:</label>
-                    <input type="text" name="username" value="<%= data[i].username %>" />
+                    <label>Card Type:</label>
+                    <input type="text" name="card_type" value="<%= data[i].card_type %>" />
                 </div>
                 <div>
-                    <label>Website:</label>
-                    <input type="text" name="website" value="<%= data[i].website%>" />
+                    <label>Card Expiry:</label>
+                    <input type="text" name="card_exp" value="<%= data[i].card_exp %>" />
+                </div>
+                <div>
+                    <label>CVV:</label>
+                    <input type="text" name="card_cvv" value="<%= data[i].card_cvv %>" />
                 </div>
                 <div>
                     <input type="hidden" name="method" value="PUT" />
@@ -72,7 +82,7 @@
 
             </form>
             <button id="edit-button-<%= i+1 %>" onclick="showEditor(<%= i+1 %>);">Edit</button>
-            <form action="/pass" method="POST">
+            <form action="/cards" method="POST">
                 <input type="hidden" name="method" value="DELETE" />
                 <input type="hidden" name="id" value="<%= data[i].id %>">
                 <input type="submit" value="Delete">

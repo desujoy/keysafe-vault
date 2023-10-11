@@ -24,7 +24,7 @@ router.route("/").get(async (req, res) => {
 });
 
 router.route("/logout").get(async (req, res) => {
-  res.clearCookie("user");
+  res.clearCookie("username");
   res.redirect("/login");
 });
 
@@ -113,7 +113,6 @@ router
         if (passwords.status === 200) {
           // console.log(passwords.data);
           res.render("pass.ejs", {
-            type: "Password",
             data: passwords.data,
             error: null,
           });
@@ -154,7 +153,6 @@ router
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
         res.render("pass.ejs", {
-          type: "Password",
           data: null,
           error: "Passwords not found!",
         });
@@ -206,7 +204,6 @@ router
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
         res.render("pass.ejs", {
-          type: "Password",
           data: null,
           error: "Passwords not found!",
         });
@@ -220,205 +217,232 @@ router
 router
   .route("/cards")
   .get(async (req, res) => {
-    const { username } = req.body;
-    const user = await User.findOne({ username: username });
-    if (user) {
-      const cards = await axios
-        .get(`${BACKEND_URL}/api/cards/user/${user.userID}`)
-        .catch(function (error) {
-          console.log(error);
-          res.status(404).send(`Cards not found!`);
-        });
-      if (cards.status === 200) {
-        res.send(cards.data);
-      } else {
-        res.status(404).send(`Cards not found!`);
-      }
+    const { username } = req.cookies;
+    if (!username) {
+      res.redirect("/login");
     } else {
-      res.status(404).send(`User not found!`);
+      const user = await User.findOne({ username: username });
+      if (user) {
+        const cards = await axios
+          .get(`${BACKEND_URL}/api/cards/user/${user.userID}`)
+          .catch(function (error) {
+            console.log(error);
+            res.redirect("/login");
+          });
+        if (cards.status === 200) {
+          res.render("cards.ejs", {
+            data: cards.data,
+            error: null,
+          });
+        } else {
+          res.redirect("/login");
+        }
+      } else {
+        res.redirect("/login");
+      }
     }
   })
   .post(async (req, res) => {
-    const { loggedInUser, name, card_number, card_type, card_cvv, card_exp } =
-      req.body;
-    const user = await User.findOne({ username: loggedInUser });
-    console.log(user);
-    if (!user) {
-      res.status(404).send(`User not found!`);
-    }
-    const owner_id = user.userID;
-    var options = {
-      method: "POST",
-      url: `${BACKEND_URL}/api/cards/add/`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: {
-        name: name,
-        card_number: card_number,
-        card_type: card_type,
-        card_cvv: card_cvv,
-        card_exp: card_exp,
-        owner_id: owner_id,
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Cards not found!`);
-    });
-    if (response) {
-      res.send(response.data);
-    }
-  })
-  .put(async (req, res) => {
-    const {
-      loggedInUser,
-      name,
-      card_number,
-      card_type,
-      card_cvv,
-      card_exp,
-      id,
-    } = req.body;
-    const user = await User.findOne({ username: loggedInUser });
-    console.log(user);
-    if (!user) {
-      res.status(404).send(`User not found!`);
-    }
-    const owner_id = user.userID;
-    var options = {
-      method: "PUT",
-      url: `${BACKEND_URL}/api/cards/update/${id}/`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: {
-        name: name,
-        card_number: card_number,
-        card_type: card_type,
-        card_cvv: card_cvv,
-        card_exp: card_exp,
-        owner_id: owner_id,
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Cards not found!`);
-    });
-    if (response) {
-      res.send(response.data);
-    }
-  })
-  .delete(async (req, res) => {
-    const { id } = req.body;
-    var options = {
-      method: "DELETE",
-      url: `${BACKEND_URL}/api/cards/delete/${id}`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Cards not found!`);
-    });
-    if (response) {
-      res.send(response.data);
+    console.log(req.body.method);
+    if (req.body.method === "PUT") {
+      console.log("put hit");
+      const loggedInUser = req.cookies.username;
+      const { name, card_number, card_type, card_cvv, card_exp, id } = req.body;
+      const user = await User.findOne({ username: loggedInUser });
+      console.log(user);
+      if (!user) {
+        res.redirect("/login");
+      }
+      const owner_id = user.userID;
+      var options = {
+        method: "PUT",
+        url: `${BACKEND_URL}/api/cards/update/${id}/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: {
+          name: name,
+          card_number: card_number,
+          card_type: card_type,
+          card_cvv: card_cvv,
+          card_exp: card_exp,
+          owner_id: owner_id,
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.render("cards.ejs", {
+          data: null,
+          error: "Cards not found!",
+        });
+      });
+      if (response) {
+        res.redirect("/cards");
+      }
+    } else if (req.body.method === "DELETE") {
+      console.log("delete hit");
+      const { id } = req.body;
+      var options = {
+        method: "DELETE",
+        url: `${BACKEND_URL}/api/cards/delete/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/cards");
+      });
+      if (response) {
+        res.redirect("/cards");
+      }
+    } else {
+      const loggedInUser = req.cookies.username;
+      const { name, card_number, card_type, card_cvv, card_exp } = req.body;
+      const user = await User.findOne({ username: loggedInUser });
+      console.log(user);
+      if (!user) {
+        res.redirect("/login");
+      }
+      const owner_id = user.userID;
+      var options = {
+        method: "POST",
+        url: `${BACKEND_URL}/api/cards/add/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: {
+          name: name,
+          card_number: card_number,
+          card_type: card_type,
+          card_cvv: card_cvv,
+          card_exp: card_exp,
+          owner_id: owner_id,
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.render("cards.ejs", {
+          data: null,
+          error: "Cards not found!",
+        });
+      });
+      if (response) {
+        res.redirect("/cards");
+      }
     }
   });
 
 router
   .route("/notes")
   .get(async (req, res) => {
-    const { username } = req.body;
-    const user = await User.findOne({ username: username });
-    if (user) {
-      const cards = await axios
-        .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
-        .catch(function (error) {
-          console.log(error);
-          res.status(404).send(`Notes not found!`);
-        });
-      if (cards.status === 200) {
-        res.send(cards.data);
-      } else {
-        res.status(404).send(`Notes not found!`);
-      }
+    const { username } = req.cookies;
+    if (!username) {
+      res.redirect("/login");
     } else {
-      res.status(404).send(`User not found!`);
+      const user = await User.findOne({ username: username });
+      if (user) {
+        const cards = await axios
+          .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
+          .catch(function (error) {
+            console.log(error);
+            res.redirect("/login");
+          });
+        if (cards.status === 200) {
+          res.render("notes.ejs", {
+            data: cards.data,
+            error: null,
+          });
+        } else {
+          res.redirect("/login");
+        }
+      } else {
+        res.redirect("/login");
+      }
     }
   })
   .post(async (req, res) => {
-    const { loggedInUser, notename, content } = req.body;
-    const user = await User.findOne({ username: loggedInUser });
-    console.log(user);
-    if (!user) {
-      res.status(404).send(`User not found!`);
-    }
-    const owner_id = user.userID;
-    var options = {
-      method: "POST",
-      url: `${BACKEND_URL}/api/notes/add/`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: {
-        notename: notename,
-        content: content,
-        owner_id: owner_id,
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Notes not found!`);
-    });
-    if (response) {
-      res.send(response.data);
-    }
-  })
-  .put(async (req, res) => {
-    const { loggedInUser, notename, content, id } = req.body;
-    const user = await User.findOne({ username: loggedInUser });
-    console.log(user);
-    if (!user) {
-      res.status(404).send(`User not found!`);
-    }
-    const owner_id = user.userID;
-    var options = {
-      method: "PUT",
-      url: `${BACKEND_URL}/api/notes/update/${id}/`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: {
-        notename: notename,
-        content: content,
-        owner_id: owner_id,
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Notes not found!`);
-    });
-    if (response) {
-      res.send(response.data);
-    }
-  })
-  .delete(async (req, res) => {
-    const { id } = req.body;
-    var options = {
-      method: "DELETE",
-      url: `${BACKEND_URL}/api/notes/delete/${id}`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Notes not found!`);
-    });
-    if (response) {
-      res.send(response.data);
+    console.log(req.body.method);
+    if (req.body.method === "PUT") {
+      console.log("put hit");
+      const loggedInUser = req.cookies.username;
+      const { notename, content, id } = req.body;
+      const user = await User.findOne({ username: loggedInUser });
+      console.log(user);
+      if (!user) {
+        res.redirect("/login");
+      }
+      const owner_id = user.userID;
+      var options = {
+        method: "PUT",
+        url: `${BACKEND_URL}/api/notes/update/${id}/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: {
+          notename: notename,
+          content: content,
+          owner_id: owner_id,
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.render("notes.ejs", {
+          data: null,
+          error: "Notes not found!",
+        });
+      });
+      if (response) {
+        res.redirect("/notes");
+      }
+    } else if (req.body.method === "DELETE") {
+      console.log("delete hit");
+      const { id } = req.body;
+      var options = {
+        method: "DELETE",
+        url: `${BACKEND_URL}/api/notes/delete/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/notes");
+      });
+      if (response) {
+        res.redirect("/notes");
+      }
+    } else {
+      const loggedInUser = req.cookies.username;
+      const { notename, content } = req.body;
+      const user = await User.findOne({ username: loggedInUser });
+      console.log(user);
+      if (!user) {
+        res.redirect("/login");
+      }
+      const owner_id = user.userID;
+      var options = {
+        method: "POST",
+        url: `${BACKEND_URL}/api/notes/add/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: {
+          notename: notename,
+          content: content,
+          owner_id: owner_id,
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.render("notes.ejs", {
+          data: null,
+          error: "Notes not found!",
+        });
+      });
+      if (response) {
+        res.redirect("/notes");
+      }
     }
   });
 
