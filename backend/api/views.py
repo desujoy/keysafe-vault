@@ -41,6 +41,13 @@ class FilesViewSet(viewsets.ModelViewSet):
         queryset = Files.objects.filter(owner_id=pk)
         serializer = FilesSerializer(queryset, many=True)
         return Response(serializer.data)
+    def create(self, request, *args, **kwargs):
+        file_serializer = FilesSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=201)
+        else:
+            return Response(file_serializer.errors, status=400)
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()

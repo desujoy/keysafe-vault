@@ -46,7 +46,6 @@ class Files(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     file = models.FileField(upload_to='files/')
-    encryptedFileName = models.CharField(max_length=100)
     owner_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
