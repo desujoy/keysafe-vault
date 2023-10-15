@@ -1,0 +1,53 @@
+<%- include('header.ejs') %>
+    <h1>Upload Files:</h1>
+    <form action="/files" method="post" enctype="multipart/form-data">
+        <div>
+            <label>Name:</label>
+            <input type="text" name="name" />
+        </div>
+        <div>
+            <label>File:</label>
+            <input type="file" name="file" />
+        </div>
+        <div>
+            <input type="submit" value="Create" />
+        </div>
+    </form>
+    <div id="error">
+        <%= error %>
+    </div>
+
+    <h1>Files
+    </h1>
+    <% if ( data !=null) { %>
+        <% for (let i=0; i < data.length; i++) { %>
+            <h2>
+                File
+                <%= i + 1 %>
+            </h2>
+            <% const fullPath = data[i].file;
+            const parts = fullPath.split('/');
+            const filename = parts[parts.length - 1]; %>
+            <div id="data-<%= i+1 %>">
+                <p>Name: <%= data[i].name %>
+                </p>
+                <p>File: <%= filename %>
+                </p>
+            </div>
+            <form action="/files" method="POST">
+                <input type="hidden" name="method" value="DOWNLOAD" />
+                <input type="hidden" name="filename" value="<%= filename %>">
+                <input type="hidden" name="id" value="<%= data[i].id %>">
+                <input type="submit" value="Download">
+            </form>
+            <form action="/files" method="POST">
+                <input type="hidden" name="method" value="DELETE" />
+                <input type="hidden" name="id" value="<%= data[i].id %>">
+                <input type="submit" value="Delete">
+            </form>
+            <% } %>
+                <% } else { %>
+                    <h2>No Data Found</h2>
+                    <% } %>
+
+                        <%- include('footer.ejs') %>

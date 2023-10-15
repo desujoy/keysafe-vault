@@ -4,6 +4,7 @@ const User = require("../models/user");
 const cors = require("cors");
 const { BACKEND_URL } = require("../connection");
 var cookieParser = require("cookie-parser");
+var fileupload = require("express-fileupload");
 
 const router = express.Router();
 router.use(express.static("public"));
@@ -11,11 +12,11 @@ router.use(express.urlencoded({ extended: true }));
 router.use(cors());
 router.use(express.json());
 router.use(cookieParser());
+router.use(fileupload());
 
 router.route("/").get(async (req, res) => {
   const { username } = req.cookies;
   const validated = await User.findOne({ username: username });
-  // console.log(validated);
   if (!validated) {
     res.redirect("/login");
   } else {
@@ -342,15 +343,15 @@ router
     } else {
       const user = await User.findOne({ username: username });
       if (user) {
-        const cards = await axios
+        const notes = await axios
           .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
           .catch(function (error) {
             console.log(error);
             res.redirect("/login");
           });
-        if (cards.status === 200) {
+        if (notes.status === 200) {
           res.render("notes.ejs", {
-            data: cards.data,
+            data: notes.data,
             error: null,
           });
         } else {
@@ -442,6 +443,128 @@ router
       });
       if (response) {
         res.redirect("/notes");
+      }
+    }
+  });
+
+router
+  .route("/files")
+  .get(async (req, res) => {
+    const { username } = req.cookies;
+    if (!username) {
+      res.redirect("/login");
+    } else {
+      const user = await User.findOne({ username: username });
+      if (user) {
+        const files = await axios
+          .get(`${BACKEND_URL}/api/files/user/${user.userID}`)
+          .catch(function (error) {
+            console.log(error);
+            res.redirect("/login");
+          });
+        if (files.status === 200) {
+          res.render("files.ejs", {
+            data: files.data,
+            error: null,
+          });
+        } else {
+          res.redirect("/login");
+        }
+      } else {
+        res.redirect("/login");
+      }
+    }
+  })
+  .post(async (req, res) => {
+    console.log(req.body.method);
+    if (req.body.method === "DELETE") {
+      console.log("delete hit");
+      const { id } = req.body;
+      var options = {
+        method: "DELETE",
+        url: `${BACKEND_URL}/api/files/delete/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/files");
+      });
+      if (response) {
+        res.redirect("/files");
+      }
+    } else if (req.body.method === "DOWNLOAD") {
+      console.log("download hit");
+      const { id, filename } = req.body;
+      var options = {
+        method: "GET",
+        url: `${BACKEND_URL}/api/files/download/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/files");
+      });
+      console.log(response);
+      if (response) {
+        // make user download the file from response.data with filename
+        res.setHeader(
+          "Content-disposition",
+          `attachment; filename=${filename}`
+        );
+        res.setHeader("Content-type", "application/octet-stream");
+        res.send(response.data);
+      } else {
+        res.redirect("/files");
+      }
+    } else {
+      const loggedInUser = req.cookies.username;
+      const { name } = req.body;
+      if (!req.files) {
+        res.render("files.ejs", {
+          data: null,
+          error: "Files not found!",
+        });
+      } else {
+        const file = req.files.file;
+        console.log(file);
+        const user = await User.findOne({ username: loggedInUser });
+        console.log(user);
+        if (!user) {
+          res.redirect("/login");
+        }
+        const owner_id = user.userID;
+        const formData = new FormData();
+        const fileBuffer = file.data;
+        const fileName = file.name;
+        const contentType = file.mimetype;
+        const fileBlob = new Blob([fileBuffer], { type: contentType });
+
+        formData.append("name", name);
+        formData.append("file", fileBlob, fileName);
+        formData.append("owner_id", owner_id);
+
+        var options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/files/add/`,
+          headers: {
+            "Content-Type": `multipart/form-data; boundary=${formData._boundary}`,
+          },
+          data: formData,
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.render("files.ejs", {
+            data: null,
+            error: "Files not found!",
+          });
+        });
+        if (response) {
+          res.redirect("/files");
+        }
       }
     }
   });

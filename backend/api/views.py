@@ -1,10 +1,15 @@
 from django.shortcuts import render
+from django.http import HttpResponse, Http404, FileResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets,response
 from .serializer import PassSerializer,SecNotesSerializer,CardsSerializer, FilesSerializer, UsersSerializer
 from .models import Pass,SecNotes,Cards, Files, Users
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .enc.algo import genKeyPass
+from django.http import HttpResponse
+from django.conf import settings
+import os
 # Create your views here.
 
 Response = response.Response
@@ -48,6 +53,15 @@ class FilesViewSet(viewsets.ModelViewSet):
             return Response(file_serializer.data, status=201)
         else:
             return Response(file_serializer.errors, status=400)
+    def download(self, request, pk=None):
+        file = Files.objects.get(pk=pk)
+        file_path = os.path.join(settings.MEDIA_ROOT, file.file.name)
+        if os.path.exists(file_path):
+            response = FileResponse(open(file_path, 'rb'))
+            response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
+            return response
+        else:
+            return Response({'error': 'file not found'}, status=404)
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()
