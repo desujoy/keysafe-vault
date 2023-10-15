@@ -312,4 +312,105 @@ router
     }
   });
 
+router
+  .route("/files")
+  .get(async (req, res) => {
+    const { username } = req.body;
+    const user = await User.findOne({ username: username });
+    if (user) {
+      const files = await axios
+        .get(`${BACKEND_URL}/api/files/user/${user.userID}`)
+        .catch(function (error) {
+          console.log(error);
+          res.redirect("/login");
+        });
+      if (files.status === 200) {
+        res.send(files.data);
+      } else {
+        res.status(404).send(`Files not found!`);
+      }
+    } else {
+      res.status(404).send(`User not found!`);
+    }
+  })
+  .post(async (req, res) => {
+    const { name, loggedInUser } = req.body;
+    if (!req.files) {
+      res.status(400).send("No files were uploaded.");
+    } else {
+      const file = req.files.file;
+      const user = await User.findOne({ username: loggedInUser });
+      console.log(user);
+      if (!user) {
+        res.status(404).send(`User not found!`);
+      }
+      const owner_id = user.userID;
+      const formData = new FormData();
+      const fileBuffer = file.data;
+      const fileName = file.name;
+      const contentType = file.mimetype;
+      const fileBlob = new Blob([fileBuffer], { type: contentType });
+
+      formData.append("name", name);
+      formData.append("file", fileBlob, fileName);
+      formData.append("owner_id", owner_id);
+
+      var options = {
+        method: "POST",
+        url: `${BACKEND_URL}/api/files/add/`,
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${formData._boundary}`,
+        },
+        data: formData,
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.status(404).send(`Files not found!`);
+      });
+      if (response) {
+        res.send(response.data);
+      }
+    }
+  })
+  .delete(async (req, res) => {
+    const { id } = req.body;
+    var options = {
+      method: "DELETE",
+      url: `${BACKEND_URL}/api/files/delete/${id}`,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    };
+    const response = await axios.request(options).catch(function (error) {
+      console.log(error);
+      res.status(404).send(`Files not found!`);
+    });
+    if (response) {
+      res.send(response.data);
+    }
+  });
+
+router.route("/files/download/").get(async (req, res) => {
+  const { id, filename } = req.body;
+  var options = {
+    method: "GET",
+    url: `${BACKEND_URL}/api/files/download/${id}`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  };
+  const response = await axios.request(options).catch(function (error) {
+    console.log(error);
+    res.redirect("/files");
+  });
+  console.log(response);
+  if (response) {
+    res.setHeader("Content-disposition", `attachment; filename=${filename}`);
+    res.setHeader("Content-type", "application/octet-stream");
+    res.send(response.data);
+  } else {
+    res.redirect("/files");
+  }
+});
+
 module.exports = router;

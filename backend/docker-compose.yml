@@ -21,9 +21,12 @@ services:
     depends_on:
       backend-db:
         condition: service_started
+    volumes:
+      - user_files:/app/files
     restart: unless-stopped
     env_file:
       - .env
 
 volumes:
   postgres_data:
+  user_files:
