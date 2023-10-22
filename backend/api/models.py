@@ -4,7 +4,7 @@ from django.db import models
 
 class Users(models.Model):
     id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=100)
+    username = models.TextField()
     last_login = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -12,10 +12,10 @@ class Users(models.Model):
 
 class Pass(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-    password = models.CharField(max_length=100)
-    username = models.CharField(max_length=100)
-    website = models.CharField(max_length=100)
+    name = models.TextField()
+    password = models.TextField()
+    username = models.TextField()
+    website = models.TextField()
     owner_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -23,8 +23,8 @@ class Pass(models.Model):
 
 class SecNotes(models.Model):
     id = models.AutoField(primary_key=True)
-    notename = models.CharField(max_length=100)
-    content = models.CharField(max_length=100)
+    notename = models.TextField()
+    content = models.TextField()
     owner_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -32,11 +32,11 @@ class SecNotes(models.Model):
     
 class Cards(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
-    card_number = models.CharField(max_length=100)
-    card_type = models.CharField(max_length=100)
-    card_cvv = models.CharField(max_length=100)
-    card_exp = models.CharField(max_length=100)
+    name = models.TextField()
+    card_number = models.TextField()
+    card_type = models.TextField()
+    card_cvv = models.TextField()
+    card_exp = models.TextField()
     owner_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -44,8 +44,9 @@ class Cards(models.Model):
 
 class Files(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100)
+    name = models.TextField()
     file = models.FileField(upload_to='files/')
+    encrypted_file_name = models.TextField(null=True)
     owner_id = models.ForeignKey(Users, on_delete=models.CASCADE)
 
     def __str__(self):
