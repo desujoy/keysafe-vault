@@ -6,11 +6,12 @@ from .serializer import PassSerializer,SecNotesSerializer,CardsSerializer, Files
 from .models import Pass,SecNotes,Cards, Files, Users
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .enc.algo import genKeyPass, encryptPass, decryptPass
+from .enc.algo import genKeyPass, encryptPass, decryptPass, encryptFile, decryptFile
 from django.http import HttpResponse
 from django.conf import settings
 import hashlib
 import os
+from io import BytesIO
 # Create your views here.
 
 Response = response.Response
@@ -197,17 +198,32 @@ class FilesViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     def create(self, request, *args, **kwargs):
         request.data['encrypted_file_name'] = hashlib.sha256(request.data['file'].name.encode('utf-8')).hexdigest()
+        owner_id = request.data['owner_id']
+        owner=Users.objects.get(pk=owner_id)
         file_serializer = FilesSerializer(data=request.data)
         if file_serializer.is_valid():
             file_serializer.save()
+            # file_path=os.path.join(settings.MEDIA_ROOT, file_serializer.data['file'])
+            encryptFile(owner.username,file_serializer.data['file'].split('/')[-1], file_serializer.data['encrypted_file_name'])
             return Response(file_serializer.data, status=201)
         else:
             return Response(file_serializer.errors, status=400)
     def download(self, request, pk=None):
         file = Files.objects.get(pk=pk)
+        try:
+            owner=Users.objects.get(pk=file.owner_id.id)
+        except:
+            return Response({'error':'file not found'}, status=404)
         file_path = os.path.join(settings.MEDIA_ROOT, file.file.name)
-        if os.path.exists(file_path):
-            response = FileResponse(open(file_path, 'rb'))
+        encrypted_file_path=os.path.join(settings.BASE_DIR_ABSOLUTE,'files','files', file.encrypted_file_name)
+        if os.path.exists(encrypted_file_path):
+            with open (encrypted_file_path, 'rb') as file:
+                file_data = file.read()
+            print(file_data)
+            decrypted_file_data = decryptFile(file_data, owner.username)
+            print(decrypted_file_data)
+            decrypted_file = BytesIO(decrypted_file_data)
+            response = FileResponse(decrypted_file)
             response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_path)
             return response
         else:
@@ -225,6 +241,9 @@ def genkeypass(request):
         if username is None or password is None:
             return JsonResponse({'username':'This field is required', 'password':'This field is required'})
         enc_blob=genKeyPass(username, password)
-        return JsonResponse({'keypass':enc_blob.decode('utf-8')})
+        enc_file=BytesIO(enc_blob)
+        response=FileResponse(enc_file)
+        response['Content-Disposition'] = 'attachment; filename=' + username + '.key'
+        return response
     else:
         return JsonResponse({'error': 'invalid request'})

@@ -2,6 +2,7 @@ import base64
 from cryptography.fernet import Fernet
 import hashlib
 from django.conf import settings
+import os
 
 def genFernetKey(username):
     blob=hashlib.sha256(username.encode()).digest()
@@ -37,3 +38,25 @@ def decryptPass(username, token):
     print(token)
     password = f.decrypt(token)
     return password.decode('utf-8')
+
+def encryptFile(username, filename, encrypted_filename):
+    print(filename)
+    key=genFernetKey(username)
+    f=Fernet(key)
+    # settings.BASE_DIR=D:\Documents\GitHub\backend we want file_path=D:\Documents\GitHub\backend\files\files\filename
+    file_path=os.path.join(settings.BASE_DIR_ABSOLUTE,'files','files', filename)
+    encrypted_file_path=os.path.join(settings.BASE_DIR_ABSOLUTE,'files','files', encrypted_filename)
+    print(file_path)
+    print(encrypted_file_path)
+    with open(file_path, 'rb') as file:
+        file_data = file.read()
+        file_data = f.encrypt(file_data)
+    with open(encrypted_file_path, 'wb') as file:
+        file.write(file_data)
+    
+def decryptFile(file_data, username):
+    key=genFernetKey(username)
+    f=Fernet(key)
+    decrypted_file_data = f.decrypt(file_data)
+    return decrypted_file_data
+        
