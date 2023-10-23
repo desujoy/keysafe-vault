@@ -6,12 +6,14 @@ const { BACKEND_URL } = require("../connection");
 
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
+router.use(express.json());
 router.use(cors());
 
 router
   .route("/pass")
   .get(async (req, res) => {
     const { username } = req.body;
+    console.log(req.body);
     const user = await User.findOne({ username: username });
     if (user) {
       const passwords = await axios

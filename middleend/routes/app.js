@@ -50,15 +50,18 @@ router
       console.log(username);
       console.log(password);
       console.log(email);
-      const response = await axios
-        .post(`${BACKEND_URL}/api/users/add/`, {
-          username: username,
-          password: password,
-        })
-        .catch(function (error) {
-          console.log(error);
-          res.redirect("/login");
-        });
+      const options_ = {
+        method: "POST",
+        url: `${BACKEND_URL}/api/users/add/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: { username: username, password: username },
+      };
+      const response = await axios.request(options_).catch(function (error) {
+        console.log(error);
+        res.redirect("/login");
+      });
       if (response) {
         const user = new User({
           userID: response.data.id,
@@ -98,7 +101,7 @@ router
   .post(async (req, res) => {
     console.log(req.body.method);
     if (req.body.method === "VERIFY") {
-      if (!req.files.keypass) {
+      if (!req.files) {
         res.render("forgot.ejs", {
           error: "Keypass file not found!",
           verified: false,
@@ -108,6 +111,42 @@ router
         console.log(keypass);
         keypassContent = keypass.data.toString();
         console.log(keypassContent);
+        const options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/verifykeypass/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: {
+            enc_blob: keypassContent.trim(),
+          },
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.render("forgot.ejs", {
+            error: "Keypass file not found!",
+            verified: false,
+          });
+        });
+        if (response) {
+          console.log(response.data);
+          if (response.data.status == "success") {
+            res.render("forgot.ejs", {
+              error: null,
+              verified: true,
+            });
+          } else {
+            res.render("forgot.ejs", {
+              error: "Keypass file not found!",
+              verified: false,
+            });
+          }
+        } else {
+          res.render("forgot.ejs", {
+            error: "Keypass file not found!",
+            verified: false,
+          });
+        }
       }
     } else {
       console.log(req.body);
@@ -245,7 +284,7 @@ router
       }
     } else {
       const token = req.cookies.token;
-      const loggedInUser = jwt.verify(token, SECRET_KEY).user.username;
+      const loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, password, username, website } = req.body;
       if (!name || !password || !username || !website) {
         res.render("pass.ejs", {

@@ -8,13 +8,13 @@
     <input type="submit" value="Upload KeyPass" name="submit">
 </form>
 <% if(verified){ %>
-<h1>Create New Password:</h1>
+<h1>Create New Account:</h1>
 <form action="/forgot" method="post">
     <input type="text" name="username" id="username" placeholder="Username">
     <input type="text" name="email" id="email" placeholder="Email">
     <input type="password" name="password" id="password" placeholder="Password">
     <input type="hidden" name="method" id="restore" value="RESTORE">
-    <input type="submit" value="Create New Password" name="submit">
+    <input type="submit" value="Create New" name="submit">
 </form>
 <% } %>
 <% if(error){ %>
