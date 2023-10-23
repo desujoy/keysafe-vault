@@ -2,8 +2,9 @@ const express = require("express");
 const axios = require("axios");
 const User = require("../models/user");
 const cors = require("cors");
-const { BACKEND_URL } = require("../connection");
+const { BACKEND_URL, SECRET_KEY } = require("../connection");
 var cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 var fileupload = require("express-fileupload");
 
 const router = express.Router();
@@ -15,17 +16,22 @@ router.use(cookieParser());
 router.use(fileupload());
 
 router.route("/").get(async (req, res) => {
-  const { username } = req.cookies;
-  const validated = await User.findOne({ username: username });
-  if (!validated) {
+  const { token } = req.cookies;
+  if (!token) {
     res.redirect("/login");
   } else {
-    res.render("index.ejs", { user: username });
+    var username = jwt.verify(token, SECRET_KEY).username;
+    const validated = await User.findOne({ username: username });
+    if (!validated) {
+      res.redirect("/login");
+    } else {
+      res.render("index.ejs", { user: username });
+    }
   }
 });
 
 router.route("/logout").get(async (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("token");
   res.redirect("/login");
 });
 
@@ -44,31 +50,67 @@ router
       console.log(username);
       console.log(password);
       console.log(email);
-      const response = await axios.post(`${BACKEND_URL}/api/users/add/`, {
-        username: username,
-      });
-      const user = new User({
-        userID: response.data.id,
-        username: username,
-        email: email,
-        password: password,
-      });
-      user.save();
-      var options = {
-        method: "POST",
-        url: `${BACKEND_URL}/api/genkeypass/`,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: { username: email, password: password },
-      };
-      const tokenResponse = await axios
-        .request(options)
+      const response = await axios
+        .post(`${BACKEND_URL}/api/users/add/`, {
+          username: username,
+          password: password,
+        })
         .catch(function (error) {
-          console.error(error);
+          console.log(error);
+          res.redirect("/login");
         });
-      const token = tokenResponse.data.keypass;
-      res.render("keypass.ejs", { token: token });
+      if (response) {
+        const user = new User({
+          userID: response.data.id,
+          username: username,
+          email: email,
+          password: password,
+        });
+        user.save();
+        var options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/genkeypass/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: { username: username, password: password },
+        };
+        const tokenResponse = await axios
+          .request(options)
+          .catch(function (error) {
+            console.log(error);
+            res.redirect("/login");
+          });
+        console.log(tokenResponse.data);
+        res.render("keypass.ejs", {
+          token: tokenResponse.data.enc_blob,
+          username: username,
+        });
+      }
+    }
+  });
+
+router
+  .route("/forgot")
+  .get(async (req, res) => {
+    res.render("forgot.ejs", { error: null, verified: false });
+  })
+  .post(async (req, res) => {
+    console.log(req.body.method);
+    if (req.body.method === "VERIFY") {
+      if (!req.files.keypass) {
+        res.render("forgot.ejs", {
+          error: "Keypass file not found!",
+          verified: false,
+        });
+      } else {
+        const keypass = req.files.keypass;
+        console.log(keypass);
+        keypassContent = keypass.data.toString();
+        console.log(keypassContent);
+      }
+    } else {
+      console.log(req.body);
     }
   });
 
@@ -86,8 +128,9 @@ router
     } else {
       const user = await User.findOne({ email: email, password: password });
       if (user) {
+        const token = jwt.sign({ username: user.username }, SECRET_KEY);
         res
-          .cookie("username", user.username, { httpOnly: true })
+          .cookie("token", token, { httpOnly: true })
           .status(200)
           .redirect("/");
       } else {
@@ -99,10 +142,11 @@ router
 router
   .route("/pass")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const passwords = await axios
@@ -129,7 +173,8 @@ router
     console.log(req.body.method);
     if (req.body.method === "PUT") {
       console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, password, username, website, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
       console.log(user);
@@ -179,38 +224,65 @@ router
       if (response) {
         res.redirect("/pass");
       }
-    } else {
-      const loggedInUser = req.cookies.username;
-      const { name, password, username, website } = req.body;
-      const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
-      if (!user) {
-        res.redirect("/login");
-      }
-      const owner_id = user.userID;
+    } else if (req.body.method === "DECRYPT") {
+      console.log("decrypt hit");
+      const { id } = req.body;
+      console.log(id);
       var options = {
-        method: "POST",
-        url: `${BACKEND_URL}/api/pass/add/`,
+        method: "GET",
+        url: `${BACKEND_URL}/api/pass/${id}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: {
-          name: name,
-          password: password,
-          username: username,
-          website: website,
-          owner_id: owner_id,
         },
       };
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
-        res.render("pass.ejs", {
-          data: null,
-          error: "Passwords not found!",
-        });
+        res.redirect("/pass");
       });
       if (response) {
-        res.redirect("/pass");
+        res.send(response.data);
+        console.log(response.data);
+      }
+    } else {
+      const token = req.cookies.token;
+      const loggedInUser = jwt.verify(token, SECRET_KEY).user.username;
+      const { name, password, username, website } = req.body;
+      if (!name || !password || !username || !website) {
+        res.render("pass.ejs", {
+          data: null,
+          error: "Invalid input!",
+        });
+      } else {
+        const user = await User.findOne({ username: loggedInUser });
+        console.log(user);
+        if (!user) {
+          res.redirect("/login");
+        }
+        const owner_id = user.userID;
+        var options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/pass/add/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: {
+            name: name,
+            password: password,
+            username: username,
+            website: website,
+            owner_id: owner_id,
+          },
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.render("pass.ejs", {
+            data: null,
+            error: "Passwords not found!",
+          });
+        });
+        if (response) {
+          res.redirect("/pass");
+        }
       }
     }
   });
@@ -218,10 +290,11 @@ router
 router
   .route("/cards")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const cards = await axios
@@ -247,7 +320,8 @@ router
     console.log(req.body.method);
     if (req.body.method === "PUT") {
       console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
       console.log(user);
@@ -297,8 +371,28 @@ router
       if (response) {
         res.redirect("/cards");
       }
+    } else if (req.body.method === "DECRYPT") {
+      console.log("decrypt hit");
+      const { id } = req.body;
+      console.log(id);
+      var options = {
+        method: "GET",
+        url: `${BACKEND_URL}/api/cards/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/cards");
+      });
+      if (response) {
+        res.send(response.data);
+        console.log(response.data);
+      }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp } = req.body;
       const user = await User.findOne({ username: loggedInUser });
       console.log(user);
@@ -337,10 +431,11 @@ router
 router
   .route("/notes")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const notes = await axios
@@ -366,7 +461,8 @@ router
     console.log(req.body.method);
     if (req.body.method === "PUT") {
       console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
       console.log(user);
@@ -413,8 +509,28 @@ router
       if (response) {
         res.redirect("/notes");
       }
+    } else if (req.body.method === "DECRYPT") {
+      console.log("decrypt hit");
+      const { id } = req.body;
+      console.log(id);
+      var options = {
+        method: "GET",
+        url: `${BACKEND_URL}/api/notes/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/notes");
+      });
+      if (response) {
+        res.send(response.data);
+        console.log(response.data);
+      }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content } = req.body;
       const user = await User.findOne({ username: loggedInUser });
       console.log(user);
@@ -450,10 +566,11 @@ router
 router
   .route("/files")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const files = await axios
@@ -521,7 +638,8 @@ router
         res.redirect("/files");
       }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name } = req.body;
       if (!req.files) {
         res.render("files.ejs", {

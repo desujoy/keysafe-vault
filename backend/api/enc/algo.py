@@ -4,33 +4,54 @@ import hashlib
 from django.conf import settings
 import os
 
-def genFernetKey(username):
-    blob=hashlib.sha256(username.encode()).digest()
-    key=base64.urlsafe_b64encode(blob)
+def genToken(username, password):
+    token=hashlib.sha256(username.encode('utf-8') + b'::' + password.encode('utf-8')).digest()
+    token=base64.urlsafe_b64encode(token).decode()
+    print(token)
+    return token
+
+def genFernetKey(token):
+    key=bytes(token,'utf-8')
     return key
 
 def genKeyPass(username, password):
-    enc_blob = base64.b64encode(username.encode('utf-8') + b'::' + password.encode('utf-8'))
-    key=genFernetKey(settings.SECRET_KEY)
+    token=genToken(username, password)
+    print(token)
+    enc_blob = genFernetKey(token)
+    secret_token=genToken(settings.SECRET_KEY,"")
+    key=genFernetKey(secret_token)
     f=Fernet(key)
     enc_blob = f.encrypt(enc_blob)
     return enc_blob
 
-def verifyKeyPass(username, password, enc_blob):
-    key=genFernetKey(settings.SECRET_KEY)
+def verifyKeyPass(enc_blob):
+    secret_token=genToken(settings.SECRET_KEY,"")
+    key=genFernetKey(secret_token)
+    f=Fernet(key)
+    try:    
+        dec_blob = f.decrypt(enc_blob)
+        test=Fernet(dec_blob)
+        return True
+    except:
+        return False
+
+def decryptKeyPass(enc_blob):
+    secret_token=genToken(settings.SECRET_KEY,"")
+    key=genFernetKey(secret_token)
     f=Fernet(key)
     dec_blob = f.decrypt(enc_blob)
-    username, password = dec_blob.decode('utf-8').split('::')
-    if username == username and password == password:
-        return True
-    else:
-        return False
+    # token=base64.urlsafe_b64decode(dec_blob)
+    return dec_blob.decode('utf-8')
+    
 
 def encryptPass(username, password):
     key=genFernetKey(username)
+    print("fernet")
+    print(key)
     f=Fernet(key)
     token = f.encrypt(password.encode('utf-8'))
     return token
+
 
 def decryptPass(username, token):
     key=genFernetKey(username)
@@ -38,6 +59,7 @@ def decryptPass(username, token):
     print(token)
     password = f.decrypt(token)
     return password.decode('utf-8')
+
 
 def encryptFile(username, filename, encrypted_filename):
     print(filename)
@@ -53,7 +75,8 @@ def encryptFile(username, filename, encrypted_filename):
         file_data = f.encrypt(file_data)
     with open(encrypted_file_path, 'wb') as file:
         file.write(file_data)
-    
+
+
 def decryptFile(file_data, username):
     key=genFernetKey(username)
     f=Fernet(key)

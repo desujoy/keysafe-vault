@@ -41,13 +41,13 @@
             <div id="data-<%= i+1 %>">
                 <p>Name: <%= data[i].name %>
                 </p>
-                <p>Card Number: <%= data[i].card_number %>
+                <p id="card-num-<%= i+1 %>">
                 </p>
                 <p>Card Type: <%= data[i].card_type %>
                 </p>
-                <p>Card Expiry: <%= data[i].card_exp %>
+                <p id="card-exp-<%= i+1 %>">
                 </p>
-                <p>CVV: <%= data[i].card_cvv %>
+                <p id="card-cvv-<%= i+1 %>">
                 </p>
             </div>
             <form id='editor-<%= i+1 %>' action="/cards" method="post" style="display: none;">
@@ -57,7 +57,7 @@
                 </div>
                 <div>
                     <label>Card Number:</label>
-                    <input type="text" name="card_number" value="<%= data[i].card_number %>" />
+                    <input type="text" name="card_number" value="" />
                 </div>
                 <div>
                     <label>Card Type:</label>
@@ -65,11 +65,11 @@
                 </div>
                 <div>
                     <label>Card Expiry:</label>
-                    <input type="text" name="card_exp" value="<%= data[i].card_exp %>" />
+                    <input type="text" name="card_exp" value="" />
                 </div>
                 <div>
                     <label>CVV:</label>
-                    <input type="text" name="card_cvv" value="<%= data[i].card_cvv %>" />
+                    <input type="text" name="card_cvv" value="" />
                 </div>
                 <div>
                     <input type="hidden" name="method" value="PUT" />
@@ -81,6 +81,8 @@
                 </div>
 
             </form>
+            <button id="show-button-<%= i+1 %>" onclick="showCard(<%= i+1 %>,<%= data[i].id %>);">Show</button>
+            <button id="hide-button-<%= i+1 %>" style="display: none;" onclick="hidePass();">Hide</button>
             <button id="edit-button-<%= i+1 %>" onclick="showEditor(<%= i+1 %>);">Edit</button>
             <form action="/cards" method="POST">
                 <input type="hidden" name="method" value="DELETE" />

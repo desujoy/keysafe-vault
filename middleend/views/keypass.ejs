@@ -2,8 +2,26 @@
 
 <h1>KeyPass</h1>
 <h2>User Created Successfully!</h2>
-<h3>Copy and store it safely:</h3>
-<code><%= token %></code>
-
+<h3>Download and Store it safely</h3>
+<input type="button" id="btn" value="Download" />
+<script>
+    function download(file, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href',
+            'data:text/plain;charset=utf-8, '
+            + encodeURIComponent(text));
+        element.setAttribute('download', file);
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+    document.getElementById("btn")
+        .addEventListener("click", function () {
+            var text = "<%= token %>";
+            var filename = "<%= username %>.key";
+            download(filename, text);
+        }, false);
+</script>
 <h3>Click Here to <a href="/login">Login</a></h3>
+
 <%- include('footer.ejs') %>
