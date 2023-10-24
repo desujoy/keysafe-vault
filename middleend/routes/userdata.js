@@ -11,7 +11,10 @@ router.use(cors());
 router
   .route("/pass")
   .get(async (req, res) => {
-    const { username } = req.body;
+    const { username } = req.query;
+    console.log(req.data)
+    console.log(req.body)
+    console.log(req.query)
     const user = await User.findOne({ username: username });
     if (user) {
       const passwords = await axios
@@ -35,28 +38,29 @@ router
     console.log(user);
     if (!user) {
       res.status(404).send(`User not found!`);
-    }
-    const owner_id = user.userID;
-    var options = {
-      method: "POST",
-      url: `${BACKEND_URL}/api/pass/add/`,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      data: {
-        name: name,
-        password: password,
-        username: username,
-        website: website,
-        owner_id: owner_id,
-      },
-    };
-    const response = await axios.request(options).catch(function (error) {
-      console.log(error);
-      res.status(404).send(`Passwords not found!`);
-    });
-    if (response) {
-      res.send(response.data);
+    } else {
+      const owner_id = user.userID;
+      var options = {
+        method: "POST",
+        url: `${BACKEND_URL}/api/pass/add/`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data: {
+          name: name,
+          password: password,
+          username: username,
+          website: website,
+          owner_id: owner_id,
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.status(404).send(`Passwords not found!`);
+      });
+      if (response) {
+        res.send(response.data);
+      }
     }
   })
   .put(async (req, res) => {
