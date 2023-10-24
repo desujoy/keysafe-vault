@@ -48,9 +48,6 @@ router
         error: "Username or password or email not provided!",
       });
     } else {
-      console.log(username);
-      console.log(password);
-      console.log(email);
       const options_ = {
         method: "POST",
         url: `${BACKEND_URL}/api/users/add/`,
@@ -85,7 +82,7 @@ router
             console.log(error);
             res.redirect("/login");
           });
-        console.log(tokenResponse.data);
+
         res.render("keypass.ejs", {
           token: tokenResponse.data.enc_blob,
           username: username,
@@ -100,7 +97,6 @@ router
     res.render("forgot.ejs", { error: null, verified: false });
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "VERIFY") {
       if (!req.files) {
         res.render("forgot.ejs", {
@@ -109,9 +105,9 @@ router
         });
       } else {
         const keypass = req.files.keypass;
-        console.log(keypass);
+
         keypassContent = keypass.data.toString();
-        console.log(keypassContent);
+
         const options = {
           method: "POST",
           url: `${BACKEND_URL}/api/verifykeypass/`,
@@ -130,11 +126,11 @@ router
           });
         });
         if (response) {
-          console.log(response.data);
           if (response.data.status == "success") {
             res.render("forgot.ejs", {
               error: null,
               verified: true,
+              keypass: keypassContent.trim(),
             });
           } else {
             res.render("forgot.ejs", {
@@ -149,8 +145,43 @@ router
           });
         }
       }
+    } else if (req.body.method === "RESTORE") {
+      const { username, email, password, keypass } = req.body;
+      if (!username || !email || !password || !keypass) {
+        res.redirect("/forgot");
+      } else {
+        const options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/restore/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: {
+            username: username,
+            password: password,
+            enc_blob: keypass,
+          },
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.redirect("/forgot");
+        });
+        if (response) {
+          if (response.data.status == "success") {
+            const user = User.findOne({ userID: response.data.old_id });
+            user.password = password;
+            user.username = username;
+            user.email = email;
+            user.save();
+            res.redirect("/login");
+          } else {
+            res.redirect("/forgot");
+          }
+        } else {
+          res.redirect("/forgot");
+        }
+      }
     } else {
-      console.log(req.body);
     }
   });
 
@@ -161,8 +192,7 @@ router
   })
   .post(async (req, res) => {
     const { email, password } = req.body;
-    console.log(email);
-    console.log(password);
+
     if (!email || !password) {
       res.render("login.ejs", { error: "Username or password not provided!" });
     } else {
@@ -196,7 +226,7 @@ router
             res.redirect("/login");
           });
         if (passwords.status === 200) {
-          // console.log(passwords.data);
+          //
           res.render("pass.ejs", {
             data: passwords.data,
             error: null,
@@ -210,14 +240,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
       const token = req.cookies.token;
       var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, password, username, website, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -247,9 +275,8 @@ router
         res.redirect("/pass");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
-      console.log(id);
+
       var options = {
         method: "DELETE",
         url: `${BACKEND_URL}/api/pass/delete/${id}`,
@@ -265,9 +292,8 @@ router
         res.redirect("/pass");
       }
     } else if (req.body.method === "DECRYPT") {
-      console.log("decrypt hit");
       const { id } = req.body;
-      console.log(id);
+
       var options = {
         method: "GET",
         url: `${BACKEND_URL}/api/pass/${id}`,
@@ -281,7 +307,6 @@ router
       });
       if (response) {
         res.send(response.data);
-        console.log(response.data);
       }
     } else {
       const token = req.cookies.token;
@@ -294,7 +319,7 @@ router
         });
       } else {
         const user = await User.findOne({ username: loggedInUser });
-        console.log(user);
+
         if (!user) {
           res.redirect("/login");
         }
@@ -357,14 +382,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
       const token = req.cookies.token;
       var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -395,7 +418,6 @@ router
         res.redirect("/cards");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -412,9 +434,8 @@ router
         res.redirect("/cards");
       }
     } else if (req.body.method === "DECRYPT") {
-      console.log("decrypt hit");
       const { id } = req.body;
-      console.log(id);
+
       var options = {
         method: "GET",
         url: `${BACKEND_URL}/api/cards/${id}`,
@@ -428,14 +449,13 @@ router
       });
       if (response) {
         res.send(response.data);
-        console.log(response.data);
       }
     } else {
       const token = req.cookies.token;
       var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -498,14 +518,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
       const token = req.cookies.token;
       var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -533,7 +551,6 @@ router
         res.redirect("/notes");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -550,9 +567,8 @@ router
         res.redirect("/notes");
       }
     } else if (req.body.method === "DECRYPT") {
-      console.log("decrypt hit");
       const { id } = req.body;
-      console.log(id);
+
       var options = {
         method: "GET",
         url: `${BACKEND_URL}/api/notes/${id}`,
@@ -566,14 +582,13 @@ router
       });
       if (response) {
         res.send(response.data);
-        console.log(response.data);
       }
     } else {
       const token = req.cookies.token;
       var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -633,9 +648,7 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -652,7 +665,6 @@ router
         res.redirect("/files");
       }
     } else if (req.body.method === "DOWNLOAD") {
-      console.log("download hit");
       const { id, filename } = req.body;
       var options = {
         method: "GET",
@@ -665,13 +677,14 @@ router
         console.log(error);
         res.redirect("/files");
       });
-      console.log(response);
+
       if (response) {
         // make user download the file from response.data with filename
         file_data = atob(response.data);
         fs.writeFileSync(filename, file_data.toString("binary"), "binary");
-        res.download(filename);
-        // fs.unlinkSync(filename);
+        res.download(filename, () => {
+          fs.unlinkSync(filename);
+        });
       } else {
         res.redirect("/files");
       }
@@ -686,9 +699,9 @@ router
         });
       } else {
         const file = req.files.file;
-        console.log(file);
+
         const user = await User.findOne({ username: loggedInUser });
-        console.log(user);
+
         if (!user) {
           res.redirect("/login");
         }
@@ -701,9 +714,8 @@ router
         const fileName = file.name;
         // make filedata base64 encoded
         const fileBuffer = Buffer.from(file.data).toString("base64");
-        console.log(fileBuffer);
+
         const fileBlob = new Blob([fileBuffer], { type: contentType });
-        console.log(fileBlob);
 
         formData.append("name", name);
         formData.append("file", fileBlob, fileName);
