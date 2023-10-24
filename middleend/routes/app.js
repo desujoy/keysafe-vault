@@ -500,7 +500,7 @@ router
       if (user) {
         const notes = await axios
           .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
-          .catch(function (error) {
+          .catch(function (error  ) {
             console.log(error);
             res.redirect("/login");
           });
