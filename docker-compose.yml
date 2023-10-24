@@ -4,20 +4,16 @@ services:
   backend-db:
     image: postgres:latest
     container_name: backend-db
-    environment:
-      POSTGRES_USER: sujoy
-      POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${SQL_DATABASE}
     volumes:
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
       - postgres_data:/var/lib/postgresql/data/
     restart: unless-stopped
+    env_file:
+      - config.env
 
   backend-api:
-    build: .
+    build: ./backend
     command: python manage.py runserver 0.0.0.0:8000
-    ports:
-      - "${API_PORT}:8000"
     depends_on:
       backend-db:
         condition: service_started
@@ -25,8 +21,27 @@ services:
       - user_files:/app/files
     restart: unless-stopped
     env_file:
-      - .env
+      - config.env
+  
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  middleend:
+    build: ./middleend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-api
+      - mongodb
+    restart: unless-stopped
+    env_file:
+      - config.env
 
 volumes:
   postgres_data:
   user_files:
+  mongodb_data:
