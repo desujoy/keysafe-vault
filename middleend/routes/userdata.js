@@ -6,6 +6,7 @@ const { BACKEND_URL } = require("../connection");
 
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
+router.use(express.json());
 router.use(cors());
 
 router
