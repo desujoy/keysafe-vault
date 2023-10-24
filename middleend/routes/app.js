@@ -6,6 +6,7 @@ const { BACKEND_URL, SECRET_KEY } = require("../connection");
 var cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 var fileupload = require("express-fileupload");
+var fs = require("fs");
 
 const router = express.Router();
 router.use(express.static("public"));
@@ -667,12 +668,10 @@ router
       console.log(response);
       if (response) {
         // make user download the file from response.data with filename
-        res.setHeader(
-          "Content-disposition",
-          `attachment; filename=${filename}`
-        );
-        res.setHeader("Content-type", "application/octet-stream");
-        res.send(atob(response.data));
+        file_data = atob(response.data);
+        fs.writeFileSync(filename, file_data.toString("binary"), "binary");
+        res.download(filename);
+        // fs.unlinkSync(filename);
       } else {
         res.redirect("/files");
       }
