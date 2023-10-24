@@ -13,7 +13,7 @@ from .serializer import (
 from .models import Pass, SecNotes, Cards, Files, Users
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .enc.algo import genKeyPass, encryptPass, decryptPass, encryptFile, decryptFile, decryptKeyPass, genToken,verifyKeyPass
+from .enc.algo import genKeyPass, encryptPass, decryptPass, encryptFile, decryptFile, decryptKeyPass, genToken,verifyKeyPass, encryptFile2, decryptFile2
 from django.http import HttpResponse
 from django.conf import settings
 import hashlib, base64
@@ -39,8 +39,8 @@ class PassViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["id"] = random.randint(1, 1000000000)
-        data["password"] = encryptPass(owner.username, data["password"])
+        # data["id"] = random.randint(1, 1000000000)
+        data["password"] = encryptPass(owner.token, data["password"])
         pass_serializer = PassSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -52,7 +52,7 @@ class PassViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["password"] = encryptPass(owner.username, data["password"])
+        data["password"] = encryptPass(owner.token, data["password"])
         pass_serializer = PassSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -70,7 +70,7 @@ class PassViewSet(viewsets.ModelViewSet):
         pass_dict = pass_obj.__dict__
         pass_dict_copy = pass_dict.copy()
         pass_dict_copy["password"] = decryptPass(
-            owner.username, pass_dict_copy["password"]
+            owner.token, pass_dict_copy["password"]
         )
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
         print(pass_dict_copy)
@@ -94,8 +94,8 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["id"] = random.randint(1, 1000000000)
-        data["content"] = encryptPass(owner.username, data["content"])
+        # data["id"] = random.randint(1, 1000000000)
+        data["content"] = encryptPass(owner.token, data["content"])
         pass_serializer = SecNotesSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -107,7 +107,7 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["content"] = encryptPass(owner.username, data["content"])
+        data["content"] = encryptPass(owner.token, data["content"])
         pass_serializer = SecNotesSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -126,7 +126,7 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         pass_dict_copy = pass_dict.copy()
         print(pass_dict_copy)
         pass_dict_copy["content"] = decryptPass(
-            owner.username, pass_dict_copy["content"]
+            owner.token, pass_dict_copy["content"]
         )
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
         print(pass_dict_copy)
@@ -150,10 +150,10 @@ class CardsViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["id"] = random.randint(1, 1000000000)
-        data["card_number"] = encryptPass(owner.username, data["card_number"])
-        data["card_exp"] = encryptPass(owner.username, data["card_exp"])
-        data["card_cvv"] = encryptPass(owner.username, data["card_cvv"])
+        # data["id"] = random.randint(1, 1000000000)
+        data["card_number"] = encryptPass(owner.token, data["card_number"])
+        data["card_exp"] = encryptPass(owner.token, data["card_exp"])
+        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"])
         pass_serializer = CardsSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -165,9 +165,9 @@ class CardsViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["card_number"] = encryptPass(owner.username, data["card_number"])
-        data["card_exp"] = encryptPass(owner.username, data["card_exp"])
-        data["card_cvv"] = encryptPass(owner.username, data["card_cvv"])
+        data["card_number"] = encryptPass(owner.token, data["card_number"])
+        data["card_exp"] = encryptPass(owner.token, data["card_exp"])
+        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"])
         pass_serializer = CardsSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -185,13 +185,13 @@ class CardsViewSet(viewsets.ModelViewSet):
         pass_dict = pass_obj.__dict__
         pass_dict_copy = pass_dict.copy()
         pass_dict_copy["card_number"] = decryptPass(
-            owner.username, pass_dict_copy["card_number"]
+            owner.token, pass_dict_copy["card_number"]
         )
         pass_dict_copy["card_exp"] = decryptPass(
-            owner.username, pass_dict_copy["card_exp"]
+            owner.token, pass_dict_copy["card_exp"]
         )
         pass_dict_copy["card_cvv"] = decryptPass(
-            owner.username, pass_dict_copy["card_cvv"]
+            owner.token, pass_dict_copy["card_cvv"]
         )
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
         print(pass_dict_copy)
@@ -215,15 +215,16 @@ class FilesViewSet(viewsets.ModelViewSet):
         request.data["encrypted_file_name"] = hashlib.sha256(
             request.data["file"].name.encode("utf-8")
         ).hexdigest()
-        request.data["id"] = random.randint(1, 1000000000)
+        # request.data["id"] = random.randint(1, 1000000000)
+        # print(request.data)
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         file_serializer = FilesSerializer(data=request.data)
         if file_serializer.is_valid():
             file_serializer.save()
             # file_path=os.path.join(settings.MEDIA_ROOT, file_serializer.data['file'])
-            encryptFile(
-                owner.username,
+            encryptFile2(
+                owner.token,
                 file_serializer.data["file"].split("/")[-1],
                 file_serializer.data["encrypted_file_name"],
             )
@@ -245,9 +246,11 @@ class FilesViewSet(viewsets.ModelViewSet):
             with open(encrypted_file_path, "rb") as file:
                 file_data = file.read()
             print(file_data)
-            decrypted_file_data = decryptFile(file_data, owner.username)
+            decrypted_file_data = decryptFile2(file_data, owner.token)
+            # decrypted_file_data=base64.b64encode(decrypted_file_data)
             print(decrypted_file_data)
             decrypted_file = BytesIO(decrypted_file_data)
+            # print(decrypted_file.read())
             response = FileResponse(decrypted_file)
             response[
                 "Content-Disposition"
@@ -308,6 +311,7 @@ def verifykeypass(request):
                     "enc_blob": "This field is required",
                 }
             )
+        print(request.POST)
         if verifyKeyPass(enc_blob):
             token=decryptKeyPass(enc_blob)
             print(token)
@@ -339,7 +343,7 @@ def restoreAll(request):
                 }
             )
         token=decryptKeyPass(enc_blob)
-        user=Users.objects.get(username=token)
+        user=Users.objects.get(token=token)
         userID=user.id
         pass_objs=Pass.objects.filter(owner_id=userID)
         notes_objs=SecNotes.objects.filter(owner_id=userID)

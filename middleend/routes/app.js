@@ -672,7 +672,7 @@ router
           `attachment; filename=${filename}`
         );
         res.setHeader("Content-type", "application/octet-stream");
-        res.send(response.data);
+        res.send(atob(response.data));
       } else {
         res.redirect("/files");
       }
@@ -695,10 +695,16 @@ router
         }
         const owner_id = user.userID;
         const formData = new FormData();
-        const fileBuffer = file.data;
+        // const fileBuffer = file.data;
+        // const fileName = file.name;
+        // const contentType = file.mimetype;
+        const contentType = "text/plain";
         const fileName = file.name;
-        const contentType = file.mimetype;
+        // make filedata base64 encoded
+        const fileBuffer = Buffer.from(file.data).toString("base64");
+        console.log(fileBuffer);
         const fileBlob = new Blob([fileBuffer], { type: contentType });
+        console.log(fileBlob);
 
         formData.append("name", name);
         formData.append("file", fileBlob, fileName);
