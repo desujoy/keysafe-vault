@@ -713,11 +713,14 @@ router
         }
         const owner_id = user.userID;
         const formData = new FormData();
-        // const fileBuffer = file.data;
-        // const fileName = file.name;
-        // const contentType = file.mimetype;
         const contentType = "text/plain";
-        const fileName = file.name;
+        var fileName = file.name.split(" ").join("_");
+        // make filename shorter if too big while intact with extension
+        if (fileName.length > 50) {
+          const fileExtension = fileName.split(".").pop();
+          fileName = fileName.substring(0, 50 - fileExtension.length - 1);
+          fileName = `${fileName}.${fileExtension}`;
+        }
         // make filedata base64 encoded
         const fileBuffer = Buffer.from(file.data).toString("base64");
 
