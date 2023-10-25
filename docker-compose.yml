@@ -13,7 +13,7 @@ services:
 
   backend-api:
     build: ./backend
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash start.sh
     depends_on:
       backend-db:
         condition: service_started

@@ -7,6 +7,7 @@ var cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 var fileupload = require("express-fileupload");
 var fs = require("fs");
+const bcrypt = require("bcrypt");
 
 const router = express.Router();
 router.use(express.static("public"));
@@ -48,6 +49,7 @@ router
         error: "Username or password or email not provided!",
       });
     } else {
+      const hashedPassword = await bcrypt.hash(password, 10);
       const options_ = {
         method: "POST",
         url: `${BACKEND_URL}/api/users/add/`,
@@ -65,7 +67,7 @@ router
           userID: response.data.id,
           username: username,
           email: email,
-          password: password,
+          password: hashedPassword,
         });
         user.save();
         var options = {
@@ -167,9 +169,10 @@ router
           res.redirect("/forgot");
         });
         if (response) {
+          const hashedPassword = await bcrypt.hash(password, 10);
           if (response.data.status == "success") {
             const user = User.findOne({ userID: response.data.old_id });
-            user.password = password;
+            user.password = hashedPassword;
             user.username = username;
             user.email = email;
             user.save();
@@ -196,13 +199,16 @@ router
     if (!email || !password) {
       res.render("login.ejs", { error: "Username or password not provided!" });
     } else {
-      const user = await User.findOne({ email: email, password: password });
+      const user = await User.findOne({ email: email });
       if (user) {
-        const token = jwt.sign({ username: user.username }, SECRET_KEY);
-        res
-          .cookie("token", token, { httpOnly: true })
-          .status(200)
-          .redirect("/");
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
+          const token = jwt.sign({ username: user.username }, SECRET_KEY);
+          res
+            .cookie("token", token, { httpOnly: true })
+            .status(200)
+            .redirect("/");
+        }
       } else {
         res.render("login.ejs", { error: "User not found!" });
       }
@@ -500,7 +506,7 @@ router
       if (user) {
         const notes = await axios
           .get(`${BACKEND_URL}/api/notes/user/${user.userID}`)
-          .catch(function (error  ) {
+          .catch(function (error) {
             console.log(error);
             res.redirect("/login");
           });
