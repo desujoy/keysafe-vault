@@ -56,7 +56,7 @@ router
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        data: { username: username, password: username },
+        data: { username: username, password: hashedPassword },
       };
       const response = await axios.request(options_).catch(function (error) {
         console.log(error);
@@ -76,7 +76,7 @@ router
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          data: { username: username, password: password },
+          data: { username: username, password: hashedPassword },
         };
         const tokenResponse = await axios
           .request(options)
@@ -133,6 +133,7 @@ router
               error: null,
               verified: true,
               keypass: keypassContent.trim(),
+              old_id: response.data.old_id,
             });
           } else {
             res.render("forgot.ejs", {
@@ -148,40 +149,63 @@ router
         }
       }
     } else if (req.body.method === "RESTORE") {
-      const { username, email, password, keypass } = req.body;
-      if (!username || !email || !password || !keypass) {
+      console.log("restore hit");
+      console.log(req.body);
+      const { old_id, password, keypass } = req.body;
+      if (!old_id || !password || !keypass) {
+        console.log("is this hot?");
         res.redirect("/forgot");
       } else {
-        const options = {
-          method: "POST",
-          url: `${BACKEND_URL}/api/restore/`,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          data: {
-            username: username,
-            password: password,
-            enc_blob: keypass,
-          },
-        };
-        const response = await axios.request(options).catch(function (error) {
-          console.log(error);
-          res.redirect("/forgot");
-        });
-        if (response) {
-          const hashedPassword = await bcrypt.hash(password, 10);
-          if (response.data.status == "success") {
-            const user = User.findOne({ userID: response.data.old_id });
-            user.password = hashedPassword;
-            user.username = username;
-            user.email = email;
-            user.save();
-            res.redirect("/login");
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.findOne({ userID: old_id });
+        console.log(user.username);
+        old_username = user.username;
+        if (user) {
+          const options = {
+            method: "POST",
+            url: `${BACKEND_URL}/api/restore/`,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data: {
+              username: user.username,
+              password: hashedPassword,
+              enc_blob: keypass,
+            },
+          };
+          const response = await axios.request(options).catch(function (error) {
+            console.log(error);
+            res.redirect("/forgot");
+          });
+          if (response) {
+            if (response.data.status == "success") {
+              user.password = hashedPassword;
+              user.save();
+              var options_ = {
+                method: "POST",
+                url: `${BACKEND_URL}/api/genkeypass/`,
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                data: { username: old_username, password: hashedPassword },
+              };
+              const tokenResponse = await axios
+                .request(options_)
+                .catch(function (error) {
+                  console.log(error);
+                  res.redirect("/login");
+                });
+
+              res.render("keypass.ejs", {
+                token: tokenResponse.data.enc_blob,
+                username: old_username,
+              });
+            } else {
+              res.redirect("/forgot");
+            }
           } else {
             res.redirect("/forgot");
           }
-        } else {
-          res.redirect("/forgot");
         }
       }
     } else {
