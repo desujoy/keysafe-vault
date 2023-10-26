@@ -1,0 +1,67 @@
+<%- include('header.ejs') %>
+    <h1>Create Secure Notes:</h1>
+    <form action="/notes" method="post">
+        <div>
+            <label>Note Name:</label>
+            <input type="text" name="notename" />
+        </div>
+        <div>
+            <label>Content:</label>
+            <input type="text" name="content" />
+        </div>
+        <div>
+            <input type="submit" value="Create" />
+        </div>
+    </form>
+    <div id="error">
+        <%= error %>
+    </div>
+
+    <h1>
+        Secure Notes
+    </h1>
+    <% if ( data !=null) { %>
+        <% for (let i=0; i < data.length; i++) { %>
+            <h2>
+                Secure Note
+                <%= i + 1 %>
+            </h2>
+            <div id="data-<%= i+1 %>">
+                <p>Note Name: <%= data[i].notename %>
+                </p>
+                <p id="note-<%= i+1 %>">
+                </p>
+            </div>
+            <form id='editor-<%= i+1 %>' action="/notes" method="post" style="display: none;">
+                <div>
+                    <label>Note Name:</label>
+                    <input type="text" name="notename" value="<%= data[i].notename %>" />
+                </div>
+                <div>
+                    <label>Content:</label>
+                    <input type="text" name="content" value="" />
+                </div>
+                <div>
+                    <input type="hidden" name="method" value="PUT" />
+                    <input type="hidden" name="id" value="<%= data[i].id %>">
+                    <input type="submit" value="Submit" />
+                </div>
+                <div>
+                    <input type="button" onclick="hideEditor(<%= i+1 %>);" value="Cancel" />
+                </div>
+
+            </form>
+            <button id="show-button-<%= i+1 %>" onclick="showNote(<%= i+1 %>,<%= data[i].id %>);">Show</button>
+            <button id="hide-button-<%= i+1 %>" style="display: none;" onclick="hidePass();">Hide</button>
+            <button id="edit-button-<%= i+1 %>" onclick="showEditor(<%= i+1 %>);">Edit</button>
+            <form action="/notes" method="POST">
+                <input type="hidden" name="method" value="DELETE" />
+                <input type="hidden" name="id" value="<%= data[i].id %>">
+                <input type="submit" value="Delete">
+            </form>
+            <% } %>
+                <% } else { %>
+                    <h2>No Data Found</h2>
+                    <% } %>
+
+                        <%- include('footer.ejs') %>

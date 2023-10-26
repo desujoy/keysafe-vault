@@ -1,0 +1,87 @@
+<%- include('header.ejs') %>
+    <h1>Create Password:</h1>
+    <form action="/pass" method="post">
+        <div>
+            <label>Name:</label>
+            <input type="text" name="name" />
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="text" name="password" />
+        </div>
+        <div>
+            <label>Username:</label>
+            <input type="text" name="username" />
+        </div>
+        <div>
+            <label>Website:</label>
+            <input type="text" name="website" />
+        </div>
+        <div>
+            <input type="submit" value="Create" />
+        </div>
+    </form>
+    <div id="error">
+        <%= error %>
+    </div>
+
+    <h1>
+        Passwords
+    </h1>
+    <% if ( data !=null) { %>
+        <% for (let i=0; i < data.length; i++) { %>
+            <h2>
+                Password
+                <%= i + 1 %>
+            </h2>
+            <div id="data-<%= i+1 %>">
+                <p>Name: <%= data[i].name %>
+                </p>
+                <p>Username: <%= data[i].username %>
+                </p>
+                <p class="password" id="pass-<%= i+1 %>">
+                </p>
+                <p>Website: <%= data[i].website %>
+                </p>
+            </div>
+            <form id='editor-<%= i+1 %>' action="/pass" method="post" style="display: none;">
+                <div>
+                    <label>Name:</label>
+                    <input type="text" name="name" value="<%= data[i].name %>" />
+                </div>
+                <div>
+                    <label>Password:</label>
+                    <input type="text" name="password" value="" />
+                </div>
+                <div>
+                    <label>Username:</label>
+                    <input type="text" name="username" value="<%= data[i].username %>" />
+                </div>
+                <div>
+                    <label>Website:</label>
+                    <input type="text" name="website" value="<%= data[i].website%>" />
+                </div>
+                <div>
+                    <input type="hidden" name="method" value="PUT" />
+                    <input type="hidden" name="id" value="<%= data[i].id %>">
+                    <input type="submit" value="Submit" />
+                </div>
+                <div>
+                    <input type="button" onclick="hideEditor(<%= i+1 %>);" value="Cancel" />
+                </div>
+
+            </form>
+            <button id="show-button-<%= i+1 %>" onclick="showPass(<%= i+1 %>,<%= data[i].id %>);">Show</button>
+            <button id="hide-button-<%= i+1 %>" style="display: none;" onclick="hidePass();">Hide</button>
+            <button id="edit-button-<%= i+1 %>" onclick="showEditor(<%= i+1 %>);">Edit</button>
+            <form action="/pass" method="POST">
+                <input type="hidden" name="method" value="DELETE" />
+                <input type="hidden" name="id" value="<%= data[i].id %>">
+                <input type="submit" value="Delete">
+            </form>
+            <% } %>
+                <% } else { %>
+                    <h2>No Data Found</h2>
+                    <% } %>
+
+                        <%- include('footer.ejs') %>

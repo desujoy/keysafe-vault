@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  backend-db:
+    image: postgres:latest
+    container_name: backend-db
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - postgres_data:/var/lib/postgresql/data/
+    restart: unless-stopped
+    env_file:
+      - config.env
+
+  backend-api:
+    build: ./backend
+    command: bash start.sh
+    depends_on:
+      backend-db:
+        condition: service_started
+    volumes:
+      - user_files:/app/files
+    restart: unless-stopped
+    env_file:
+      - config.env
+  
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  middleend:
+    build: ./middleend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-api
+      - mongo-db
+    restart: unless-stopped
+    env_file:
+      - config.env
+
+volumes:
+  postgres_data:
+  user_files:
+  mongodb_data:

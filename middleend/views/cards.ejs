@@ -1,0 +1,97 @@
+<%- include('header.ejs') %>
+    <h1>Create Cards:</h1>
+    <form action="/cards" method="post">
+        <div>
+            <label>Name:</label>
+            <input type="text" name="name" />
+        </div>
+        <div>
+            <label>Card Number:</label>
+            <input type="text" name="card_number" />
+        </div>
+        <div>
+            <label>Card Type:</label>
+            <input type="text" name="card_type" />
+        </div>
+        <div>
+            <label>Card Expiry:</label>
+            <input type="text" name="card_exp" />
+        </div>
+        <div>
+            <label>CVV:</label>
+            <input type="text" name="card_cvv" />
+        </div>
+        <div>
+            <input type="submit" value="Create" />
+        </div>
+    </form>
+    <div id="error">
+        <%= error %>
+    </div>
+
+    <h1>
+        Cards
+    </h1>
+    <% if ( data !=null) { %>
+        <% for (let i=0; i < data.length; i++) { %>
+            <h2>
+                Card
+                <%= i + 1 %>
+            </h2>
+            <div id="data-<%= i+1 %>">
+                <p>Name: <%= data[i].name %>
+                </p>
+                <p id="card-num-<%= i+1 %>">
+                </p>
+                <p>Card Type: <%= data[i].card_type %>
+                </p>
+                <p id="card-exp-<%= i+1 %>">
+                </p>
+                <p id="card-cvv-<%= i+1 %>">
+                </p>
+            </div>
+            <form id='editor-<%= i+1 %>' action="/cards" method="post" style="display: none;">
+                <div>
+                    <label>Name:</label>
+                    <input type="text" name="name" value="<%= data[i].name %>" />
+                </div>
+                <div>
+                    <label>Card Number:</label>
+                    <input type="text" name="card_number" value="" />
+                </div>
+                <div>
+                    <label>Card Type:</label>
+                    <input type="text" name="card_type" value="<%= data[i].card_type %>" />
+                </div>
+                <div>
+                    <label>Card Expiry:</label>
+                    <input type="text" name="card_exp" value="" />
+                </div>
+                <div>
+                    <label>CVV:</label>
+                    <input type="text" name="card_cvv" value="" />
+                </div>
+                <div>
+                    <input type="hidden" name="method" value="PUT" />
+                    <input type="hidden" name="id" value="<%= data[i].id %>">
+                    <input type="submit" value="Submit" />
+                </div>
+                <div>
+                    <input type="button" onclick="hideEditor(<%= i+1 %>);" value="Cancel" />
+                </div>
+
+            </form>
+            <button id="show-button-<%= i+1 %>" onclick="showCard(<%= i+1 %>,<%= data[i].id %>);">Show</button>
+            <button id="hide-button-<%= i+1 %>" style="display: none;" onclick="hidePass();">Hide</button>
+            <button id="edit-button-<%= i+1 %>" onclick="showEditor(<%= i+1 %>);">Edit</button>
+            <form action="/cards" method="POST">
+                <input type="hidden" name="method" value="DELETE" />
+                <input type="hidden" name="id" value="<%= data[i].id %>">
+                <input type="submit" value="Delete">
+            </form>
+            <% } %>
+                <% } else { %>
+                    <h2>No Data Found</h2>
+                    <% } %>
+
+                        <%- include('footer.ejs') %>
