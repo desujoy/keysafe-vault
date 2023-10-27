@@ -52,7 +52,7 @@ class PassViewSet(viewsets.ModelViewSet):
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
         # data["id"] = random.randint(1, 1000000000)
-        data["password"] = encryptPass(owner.token, data["password"])
+        data["password"] = encryptPass(owner.token, data["password"]).decode("utf-8")
         pass_serializer = PassSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -64,7 +64,7 @@ class PassViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["password"] = encryptPass(owner.token, data["password"])
+        data["password"] = encryptPass(owner.token, data["password"]).decode("utf-8")
         pass_serializer = PassSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -78,14 +78,14 @@ class PassViewSet(viewsets.ModelViewSet):
         except:
             return Response({"error": "pass not found"}, status=404)
         owner = Users.objects.get(pk=pass_obj.owner_id.id)
-
+        print(pass_obj.__dict__)
         pass_dict = pass_obj.__dict__
         pass_dict_copy = pass_dict.copy()
         pass_dict_copy["password"] = decryptPass(
             owner.token, pass_dict_copy["password"]
         )
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
-
+        print(pass_dict_copy)
         pass_serializer = PassSerializer(data=pass_dict_copy)
         if pass_serializer.is_valid():
             return Response(pass_serializer.data, status=201)
@@ -107,7 +107,7 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
         # data["id"] = random.randint(1, 1000000000)
-        data["content"] = encryptPass(owner.token, data["content"])
+        data["content"] = encryptPass(owner.token, data["content"]).decode("utf-8")
         pass_serializer = SecNotesSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -119,7 +119,7 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["content"] = encryptPass(owner.token, data["content"])
+        data["content"] = encryptPass(owner.token, data["content"]).decode("utf-8")
         pass_serializer = SecNotesSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -133,13 +133,13 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         except:
             return Response({"error": "note not found"}, status=404)
         owner = Users.objects.get(pk=pass_obj.owner_id.id)
-
+        print(pass_obj.__dict__)
         pass_dict = pass_obj.__dict__
         pass_dict_copy = pass_dict.copy()
-
+        print(pass_dict_copy)
         pass_dict_copy["content"] = decryptPass(owner.token, pass_dict_copy["content"])
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
-
+        print(pass_dict_copy)
         pass_serializer = SecNotesSerializer(data=pass_dict_copy)
         if pass_serializer.is_valid():
             return Response(pass_serializer.data, status=201)
@@ -161,9 +161,11 @@ class CardsViewSet(viewsets.ModelViewSet):
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
         # data["id"] = random.randint(1, 1000000000)
-        data["card_number"] = encryptPass(owner.token, data["card_number"])
-        data["card_exp"] = encryptPass(owner.token, data["card_exp"])
-        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"])
+        data["card_number"] = encryptPass(owner.token, data["card_number"]).decode(
+            "utf-8"
+        )
+        data["card_exp"] = encryptPass(owner.token, data["card_exp"]).decode("utf-8")
+        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"]).decode("utf-8")
         pass_serializer = CardsSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -175,9 +177,11 @@ class CardsViewSet(viewsets.ModelViewSet):
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
-        data["card_number"] = encryptPass(owner.token, data["card_number"])
-        data["card_exp"] = encryptPass(owner.token, data["card_exp"])
-        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"])
+        data["card_number"] = encryptPass(owner.token, data["card_number"]).decode(
+            "utf-8"
+        )
+        data["card_exp"] = encryptPass(owner.token, data["card_exp"]).decode("utf-8")
+        data["card_cvv"] = encryptPass(owner.token, data["card_cvv"]).decode("utf-8")
         pass_serializer = CardsSerializer(data=request.data)
         if pass_serializer.is_valid():
             pass_serializer.save()
@@ -191,7 +195,7 @@ class CardsViewSet(viewsets.ModelViewSet):
         except:
             return Response({"error": "card not found"}, status=404)
         owner = Users.objects.get(pk=pass_obj.owner_id.id)
-
+        print(pass_obj.__dict__)
         pass_dict = pass_obj.__dict__
         pass_dict_copy = pass_dict.copy()
         pass_dict_copy["card_number"] = decryptPass(
@@ -204,7 +208,7 @@ class CardsViewSet(viewsets.ModelViewSet):
             owner.token, pass_dict_copy["card_cvv"]
         )
         pass_dict_copy["owner_id"] = pass_dict_copy["owner_id_id"]
-
+        print(pass_dict_copy)
         pass_serializer = CardsSerializer(data=pass_dict_copy)
         if pass_serializer.is_valid():
             return Response(pass_serializer.data, status=201)
@@ -226,7 +230,7 @@ class FilesViewSet(viewsets.ModelViewSet):
             request.data["file"].name.encode("utf-8")
         ).hexdigest()
         # request.data["id"] = random.randint(1, 1000000000)
-        #
+        # print(request.data)
         owner_id = request.data["owner_id"]
         owner = Users.objects.get(pk=owner_id)
         file_serializer = FilesSerializer(data=request.data)
@@ -255,12 +259,12 @@ class FilesViewSet(viewsets.ModelViewSet):
         if os.path.exists(encrypted_file_path):
             with open(encrypted_file_path, "rb") as file:
                 file_data = file.read()
-
+            # print(file_data)
             decrypted_file_data = decryptFile2(file_data, owner.token)
             # decrypted_file_data=base64.b64encode(decrypted_file_data)
-
+            # print(decrypted_file_data)
             decrypted_file = BytesIO(decrypted_file_data)
-            #
+            # print(decrypted_file.read())
             response = FileResponse(decrypted_file)
             response[
                 "Content-Disposition"
@@ -278,7 +282,14 @@ class FilesViewSet(viewsets.ModelViewSet):
                 Files.objects.get(id=kwargs["pk"]).encrypted_file_name,
             )
         )
-
+        print(
+            os.path.join(
+                settings.BASE_DIR_ABSOLUTE,
+                "files",
+                "files",
+                Files.objects.get(id=kwargs["pk"]).encrypted_file_name,
+            )
+        )
         return super().destroy(request, *args, **kwargs)
 
 
@@ -288,10 +299,15 @@ class UsersViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-
+        print(f'username={data["username"]}, passowrd={data["password"]}')
+        print(type(data["username"]))
+        print(data)
         data["token"] = genToken(data["username"], data["password"])
-
-        data["verification_string"] = encryptPass(data["token"], settings.SECRET_KEY)
+        print(data["token"])
+        print(type(data["token"]))
+        data["verification_string"] = encryptPass(
+            data["token"], settings.SECRET_KEY
+        ).decode("utf-8")
         del data["username"]
         del data["password"]
         user_serializer = UsersSerializer(data=data)
@@ -314,6 +330,7 @@ def genkeypass(request):
                     "password": "This field is required",
                 }
             )
+        print(f"views genkeypass: username={username}, password={password}")
         enc_blob = genKeyPass(username, password)
         response = JsonResponse({"enc_blob": enc_blob.decode("utf-8")})
         return response
@@ -331,15 +348,16 @@ def verifykeypass(request):
                     "enc_blob": "This field is required",
                 }
             )
-
+        print(request.POST)
+        print(f"views verifykeypass: enc_blob={enc_blob}")
         if verifyKeyPass(enc_blob):
             token = decryptKeyPass(enc_blob)
-
+            print("views verifykeypass: after_decrypt old_token= " + token)
             user = Users.objects.get(token=token)
             try:
                 secret = decryptPass(token, user.verification_string)
                 if secret == settings.SECRET_KEY:
-                    return JsonResponse({"status": "success"})
+                    return JsonResponse({"status": "success", "old_id": user.id})
                 else:
                     return JsonResponse({"status": "fail"})
             except:
@@ -363,6 +381,8 @@ def restoreAll(request):
                 }
             )
         token = decryptKeyPass(enc_blob)
+        print("views restoreAll: after_decrypt old_token= " + token)
+        print(f"views restoreAll: username={username}, password={password}")
         user = Users.objects.get(token=token)
         userID = user.id
         pass_objs = Pass.objects.filter(owner_id=userID)
@@ -370,34 +390,40 @@ def restoreAll(request):
         cards_objs = Cards.objects.filter(owner_id=userID)
         files_objs = Files.objects.filter(owner_id=userID)
         new_token = genToken(username, password)
+        print("views restoreAll: new_token= " + new_token)
         user.token = new_token
-        user.verification_string = encryptPass(new_token, settings.SECRET_KEY)
+        user.verification_string = encryptPass(new_token, settings.SECRET_KEY).decode(
+            "utf-8"
+        )
         user.save()
         for pass_obj in pass_objs:
             pass_obj.password = encryptPass(
                 new_token, decryptPass(token, pass_obj.password)
-            )
+            ).decode("utf-8")
             pass_obj.save()
         for notes_obj in notes_objs:
             notes_obj.content = encryptPass(
                 new_token, decryptPass(token, notes_obj.content)
-            )
+            ).decode("utf-8")
             notes_obj.save()
         for cards_obj in cards_objs:
             cards_obj.card_number = encryptPass(
                 new_token, decryptPass(token, cards_obj.card_number)
-            )
+            ).decode("utf-8")
             cards_obj.card_exp = encryptPass(
                 new_token, decryptPass(token, cards_obj.card_exp)
-            )
+            ).decode("utf-8")
             cards_obj.card_cvv = encryptPass(
                 new_token, decryptPass(token, cards_obj.card_cvv)
-            )
+            ).decode("utf-8")
             cards_obj.save()
         for files_obj in files_objs:
             reencryptFile2(token, new_token, files_obj.encrypted_file_name)
         response = JsonResponse(
-            {"status": "success", "old_id": userID, "new_id": user.id}
+            {
+                "status": "success",
+                "new_keypass": genKeyPass(username, password).decode("utf-8"),
+            }
         )
         return response
     else:
