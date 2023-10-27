@@ -2,9 +2,12 @@ const express = require("express");
 const axios = require("axios");
 const User = require("../models/user");
 const cors = require("cors");
-const { BACKEND_URL } = require("../connection");
+const { BACKEND_URL, SECRET_KEY } = require("../connection");
 var cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 var fileupload = require("express-fileupload");
+var fs = require("fs");
+const bcrypt = require("bcrypt");
 
 const router = express.Router();
 router.use(express.static("public"));
@@ -15,17 +18,22 @@ router.use(cookieParser());
 router.use(fileupload());
 
 router.route("/").get(async (req, res) => {
-  const { username } = req.cookies;
-  const validated = await User.findOne({ username: username });
-  if (!validated) {
+  const { token } = req.cookies;
+  if (!token) {
     res.redirect("/login");
   } else {
-    res.render("index.ejs", { user: username });
+    var username = jwt.verify(token, SECRET_KEY).username;
+    const validated = await User.findOne({ username: username });
+    if (!validated) {
+      res.redirect("/login");
+    } else {
+      res.render("index.ejs", { user: username });
+    }
   }
 });
 
 router.route("/logout").get(async (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("token");
   res.redirect("/login");
 });
 
@@ -41,34 +49,166 @@ router
         error: "Username or password or email not provided!",
       });
     } else {
-      console.log(username);
-      console.log(password);
-      console.log(email);
-      const response = await axios.post(`${BACKEND_URL}/api/users/add/`, {
-        username: username,
-      });
-      const user = new User({
-        userID: response.data.id,
-        username: username,
-        email: email,
-        password: password,
-      });
-      user.save();
-      var options = {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const options_ = {
         method: "POST",
-        url: `${BACKEND_URL}/api/genkeypass/`,
+        url: `${BACKEND_URL}/api/users/add/`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        data: { username: email, password: password },
+        data: { username: username, password: hashedPassword },
       };
-      const tokenResponse = await axios
-        .request(options)
-        .catch(function (error) {
-          console.error(error);
+      const response = await axios.request(options_).catch(function (error) {
+        console.log(error);
+        res.redirect("/login");
+      });
+      if (response) {
+        const user = new User({
+          userID: response.data.id,
+          username: username,
+          email: email,
+          password: hashedPassword,
         });
-      const token = tokenResponse.data.keypass;
-      res.render("keypass.ejs", { token: token });
+        user.save();
+        var options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/genkeypass/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: { username: username, password: hashedPassword },
+        };
+        const tokenResponse = await axios
+          .request(options)
+          .catch(function (error) {
+            console.log(error);
+            res.redirect("/login");
+          });
+
+        res.render("keypass.ejs", {
+          token: tokenResponse.data.enc_blob,
+          username: username,
+        });
+      }
+    }
+  });
+
+router
+  .route("/forgot")
+  .get(async (req, res) => {
+    res.render("forgot.ejs", { error: null, verified: false });
+  })
+  .post(async (req, res) => {
+    if (req.body.method === "VERIFY") {
+      if (!req.files) {
+        res.render("forgot.ejs", {
+          error: "Keypass file not found!",
+          verified: false,
+        });
+      } else {
+        const keypass = req.files.keypass;
+
+        keypassContent = keypass.data.toString();
+
+        const options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/verifykeypass/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: {
+            enc_blob: keypassContent.trim(),
+          },
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.render("forgot.ejs", {
+            error: "Keypass file not found!",
+            verified: false,
+          });
+        });
+        if (response) {
+          if (response.data.status == "success") {
+            res.render("forgot.ejs", {
+              error: null,
+              verified: true,
+              keypass: keypassContent.trim(),
+              old_id: response.data.old_id,
+            });
+          } else {
+            res.render("forgot.ejs", {
+              error: "Keypass file not found!",
+              verified: false,
+            });
+          }
+        } else {
+          res.render("forgot.ejs", {
+            error: "Keypass file not found!",
+            verified: false,
+          });
+        }
+      }
+    } else if (req.body.method === "RESTORE") {
+      console.log("restore hit");
+      console.log(req.body);
+      const { old_id, password, keypass } = req.body;
+      if (!old_id || !password || !keypass) {
+        console.log("is this hot?");
+        res.redirect("/forgot");
+      } else {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.findOne({ userID: old_id });
+        console.log(user.username);
+        old_username = user.username;
+        if (user) {
+          const options = {
+            method: "POST",
+            url: `${BACKEND_URL}/api/restore/`,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data: {
+              username: user.username,
+              password: hashedPassword,
+              enc_blob: keypass,
+            },
+          };
+          const response = await axios.request(options).catch(function (error) {
+            console.log(error);
+            res.redirect("/forgot");
+          });
+          if (response) {
+            if (response.data.status == "success") {
+              user.password = hashedPassword;
+              user.save();
+              var options_ = {
+                method: "POST",
+                url: `${BACKEND_URL}/api/genkeypass/`,
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                data: { username: old_username, password: hashedPassword },
+              };
+              const tokenResponse = await axios
+                .request(options_)
+                .catch(function (error) {
+                  console.log(error);
+                  res.redirect("/login");
+                });
+
+              res.render("keypass.ejs", {
+                token: tokenResponse.data.enc_blob,
+                username: old_username,
+              });
+            } else {
+              res.redirect("/forgot");
+            }
+          } else {
+            res.redirect("/forgot");
+          }
+        }
+      }
+    } else {
     }
   });
 
@@ -79,17 +219,20 @@ router
   })
   .post(async (req, res) => {
     const { email, password } = req.body;
-    console.log(email);
-    console.log(password);
+
     if (!email || !password) {
       res.render("login.ejs", { error: "Username or password not provided!" });
     } else {
-      const user = await User.findOne({ email: email, password: password });
+      const user = await User.findOne({ email: email });
       if (user) {
-        res
-          .cookie("username", user.username, { httpOnly: true })
-          .status(200)
-          .redirect("/");
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
+          const token = jwt.sign({ username: user.username }, SECRET_KEY);
+          res
+            .cookie("token", token, { httpOnly: true })
+            .status(200)
+            .redirect("/");
+        }
       } else {
         res.render("login.ejs", { error: "User not found!" });
       }
@@ -99,10 +242,11 @@ router
 router
   .route("/pass")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const passwords = await axios
@@ -112,7 +256,7 @@ router
             res.redirect("/login");
           });
         if (passwords.status === 200) {
-          // console.log(passwords.data);
+          //
           res.render("pass.ejs", {
             data: passwords.data,
             error: null,
@@ -126,13 +270,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, password, username, website, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -162,9 +305,8 @@ router
         res.redirect("/pass");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
-      console.log(id);
+
       var options = {
         method: "DELETE",
         url: `${BACKEND_URL}/api/pass/delete/${id}`,
@@ -179,38 +321,63 @@ router
       if (response) {
         res.redirect("/pass");
       }
-    } else {
-      const loggedInUser = req.cookies.username;
-      const { name, password, username, website } = req.body;
-      const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
-      if (!user) {
-        res.redirect("/login");
-      }
-      const owner_id = user.userID;
+    } else if (req.body.method === "DECRYPT") {
+      const { id } = req.body;
+
       var options = {
-        method: "POST",
-        url: `${BACKEND_URL}/api/pass/add/`,
+        method: "GET",
+        url: `${BACKEND_URL}/api/pass/${id}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data: {
-          name: name,
-          password: password,
-          username: username,
-          website: website,
-          owner_id: owner_id,
         },
       };
       const response = await axios.request(options).catch(function (error) {
         console.log(error);
-        res.render("pass.ejs", {
-          data: null,
-          error: "Passwords not found!",
-        });
+        res.redirect("/pass");
       });
       if (response) {
-        res.redirect("/pass");
+        res.send(response.data);
+      }
+    } else {
+      const token = req.cookies.token;
+      const loggedInUser = jwt.verify(token, SECRET_KEY).username;
+      const { name, password, username, website } = req.body;
+      if (!name || !password || !username || !website) {
+        res.render("pass.ejs", {
+          data: null,
+          error: "Invalid input!",
+        });
+      } else {
+        const user = await User.findOne({ username: loggedInUser });
+
+        if (!user) {
+          res.redirect("/login");
+        }
+        const owner_id = user.userID;
+        var options = {
+          method: "POST",
+          url: `${BACKEND_URL}/api/pass/add/`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: {
+            name: name,
+            password: password,
+            username: username,
+            website: website,
+            owner_id: owner_id,
+          },
+        };
+        const response = await axios.request(options).catch(function (error) {
+          console.log(error);
+          res.render("pass.ejs", {
+            data: null,
+            error: "Passwords not found!",
+          });
+        });
+        if (response) {
+          res.redirect("/pass");
+        }
       }
     }
   });
@@ -218,10 +385,11 @@ router
 router
   .route("/cards")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const cards = await axios
@@ -244,13 +412,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -281,7 +448,6 @@ router
         res.redirect("/cards");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -297,11 +463,29 @@ router
       if (response) {
         res.redirect("/cards");
       }
+    } else if (req.body.method === "DECRYPT") {
+      const { id } = req.body;
+
+      var options = {
+        method: "GET",
+        url: `${BACKEND_URL}/api/cards/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/cards");
+      });
+      if (response) {
+        res.send(response.data);
+      }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name, card_number, card_type, card_cvv, card_exp } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -337,10 +521,11 @@ router
 router
   .route("/notes")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const notes = await axios
@@ -363,13 +548,12 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "PUT") {
-      console.log("put hit");
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content, id } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -397,7 +581,6 @@ router
         res.redirect("/notes");
       }
     } else if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -413,11 +596,29 @@ router
       if (response) {
         res.redirect("/notes");
       }
+    } else if (req.body.method === "DECRYPT") {
+      const { id } = req.body;
+
+      var options = {
+        method: "GET",
+        url: `${BACKEND_URL}/api/notes/${id}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      };
+      const response = await axios.request(options).catch(function (error) {
+        console.log(error);
+        res.redirect("/notes");
+      });
+      if (response) {
+        res.send(response.data);
+      }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { notename, content } = req.body;
       const user = await User.findOne({ username: loggedInUser });
-      console.log(user);
+
       if (!user) {
         res.redirect("/login");
       }
@@ -450,10 +651,11 @@ router
 router
   .route("/files")
   .get(async (req, res) => {
-    const { username } = req.cookies;
-    if (!username) {
+    const { token } = req.cookies;
+    if (!token) {
       res.redirect("/login");
     } else {
+      var username = jwt.verify(token, SECRET_KEY).username;
       const user = await User.findOne({ username: username });
       if (user) {
         const files = await axios
@@ -476,9 +678,7 @@ router
     }
   })
   .post(async (req, res) => {
-    console.log(req.body.method);
     if (req.body.method === "DELETE") {
-      console.log("delete hit");
       const { id } = req.body;
       var options = {
         method: "DELETE",
@@ -495,7 +695,6 @@ router
         res.redirect("/files");
       }
     } else if (req.body.method === "DOWNLOAD") {
-      console.log("download hit");
       const { id, filename } = req.body;
       var options = {
         method: "GET",
@@ -508,20 +707,20 @@ router
         console.log(error);
         res.redirect("/files");
       });
-      console.log(response);
+
       if (response) {
         // make user download the file from response.data with filename
-        res.setHeader(
-          "Content-disposition",
-          `attachment; filename=${filename}`
-        );
-        res.setHeader("Content-type", "application/octet-stream");
-        res.send(response.data);
+        file_data = atob(response.data);
+        fs.writeFileSync(filename, file_data.toString("binary"), "binary");
+        res.download(filename, () => {
+          fs.unlinkSync(filename);
+        });
       } else {
         res.redirect("/files");
       }
     } else {
-      const loggedInUser = req.cookies.username;
+      const token = req.cookies.token;
+      var loggedInUser = jwt.verify(token, SECRET_KEY).username;
       const { name } = req.body;
       if (!req.files) {
         res.render("files.ejs", {
@@ -530,17 +729,25 @@ router
         });
       } else {
         const file = req.files.file;
-        console.log(file);
+
         const user = await User.findOne({ username: loggedInUser });
-        console.log(user);
+
         if (!user) {
           res.redirect("/login");
         }
         const owner_id = user.userID;
         const formData = new FormData();
-        const fileBuffer = file.data;
-        const fileName = file.name;
-        const contentType = file.mimetype;
+        const contentType = "text/plain";
+        var fileName = file.name.split(" ").join("_");
+        // make filename shorter if too big while intact with extension
+        if (fileName.length > 50) {
+          const fileExtension = fileName.split(".").pop();
+          fileName = fileName.substring(0, 50 - fileExtension.length - 1);
+          fileName = `${fileName}.${fileExtension}`;
+        }
+        // make filedata base64 encoded
+        const fileBuffer = Buffer.from(file.data).toString("base64");
+
         const fileBlob = new Blob([fileBuffer], { type: contentType });
 
         formData.append("name", name);

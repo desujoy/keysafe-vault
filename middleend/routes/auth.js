@@ -54,10 +54,11 @@ router.route("/login").post(async (req, res) => {
   } else {
     const user = await User.findOne({ email: email, password: password });
     if (user) {
-      res
-        .cookie("user", user.email, { maxAge: 900000, httpOnly: true })
-        .status(200)
-        .redirect("/");
+      // Setting cookie with the user's email.
+      res.cookie("user", user.email, { maxAge: 900000, httpOnly: true });
+
+      // Sending response with the username.
+      res.status(200).json({ username: user.username });
     } else {
       res.status(404).send(`User not found!`);
     }

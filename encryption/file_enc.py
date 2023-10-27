@@ -7,7 +7,11 @@ iv = b'H\x07z,\xf9\x8dg\xa9\xee\x02\x1a\xa9\x88P\t\xe9'
 
 padder = padding.PKCS7(128).padder()
 
+<<<<<<< HEAD
 a = r"cubes.png"
+=======
+a = r"C:\Users\HP\OneDrive\Desktop\ee.txt"
+>>>>>>> d3c80eb9ee9797b26d30de947d906819adace91b
 
 with open(a,'rb') as file:
     data1 = file.read()

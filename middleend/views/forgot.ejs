@@ -1,0 +1,25 @@
+<%- include('header.ejs') %>
+
+<h1>Forgot Password</h1>
+<h2>Upload KeyPass File:</h2>
+<form action="/forgot" method="post" enctype="multipart/form-data">
+    <input type="file" name="keypass" id="keypass">
+    <input type="hidden" name="method" value="VERIFY">
+    <input type="submit" value="Upload KeyPass" name="submit">
+</form>
+<% if(verified){ %>
+<h1>Create New Password:</h1>
+<form action="/forgot" method="post">
+    <input type="password" name="password" id="password" placeholder="Password">
+    <input type="hidden" name="method" id="restore" value="RESTORE">
+    <input type="hidden" name="keypass" id="keypass" value="<%= keypass %>">
+    <input type="hidden" name="old_id" id="old_id" value="<%= old_id %>">
+    <input type="submit" value="Create New" name="submit">
+</form>
+<% } %>
+<% if(error){ %>
+<h1 class="error"><%= error %></h1>
+<% } %>
+<a href="/login">Login</a>
+<a href="/register">Register</a>
+<%- include('footer.ejs') %>
