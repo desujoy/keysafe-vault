@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'package:google_sign_in/google_sign_in'; 
-import 'package:login2/pesonalized_page.dart'; 
+import 'package:login2/forgotpassword.dart';
+import 'package:login2/pesonalized_page.dart';
+import 'package:login2/signup_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -33,31 +36,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final _formKey = GlobalKey<FormState>();
   String _email = '';
   String _password = '';
-
   String? _emailError;
   String? _passwordError;
-
-  // Future<void> _handleGoogleSignIn() async {
-  //   final googleSignIn = GoogleSignIn();
-
-  //   try {
-  //     final account = await googleSignIn.signIn();
-
-  //     if (account != null) {
-
-  //       Navigator.of(context).push(
-  //         MaterialPageRoute(
-  //           builder: (context) => PersonalizedPage(),
-  //         ),
-  //       );
-  //     } else {
-  //       // User canceled Google sign-up
-  //     }
-  //   } catch (error) {
-  //     // Handle Google sign-up error
-  //     print('Google Sign-Up Error: $error');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -109,12 +89,24 @@ class _MyHomePageState extends State<MyHomePage> {
                 obscureText: true,
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    if (_email == 'youremail@example.com' && _password == 'yourpassword') {
+                    var map = Map<String, dynamic>();
+                    map['email'] = _email;
+                    map['password'] = _password;
+
+                    final response = await http.post(
+                      Uri.parse('http://localhost:3000/auth/login'),
+                      body: map,
+                    );
+
+                    if (response.statusCode == 200) {
+                      final data = json.decode(response.body);
+                      final username = data['username'];
+
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => PersonalizedPage(),
+                          builder: (context) => PersonalizedPage(username: username),
                         ),
                       );
                     } else {
@@ -134,13 +126,24 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SignupPage(),
+                    ),
+                  );
                 },
                 child: Text('Sign Up'),
               ),
-              // ElevatedButton(
-              //   onPressed: _handleGoogleSignIn,
-              //   child: Text('Sign Up with Google'),
-              // ),
+                            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ForgotPasswordPage(username: _email),
+                    ),
+                  );
+                },
+                child: Text('Forgot Password'),
+              ),
             ],
           ),
         ),
@@ -148,3 +151,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
