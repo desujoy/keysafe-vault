@@ -232,6 +232,9 @@ router
             .cookie("token", token, { httpOnly: true })
             .status(200)
             .redirect("/");
+        } else {
+          res.render("login.ejs", { error: "Wrong Password!" });
+
         }
       } else {
         res.render("login.ejs", { error: "User not found!" });

@@ -1,1 +1,3 @@
 .vscode
+node_modules
+middleend\node_modules
