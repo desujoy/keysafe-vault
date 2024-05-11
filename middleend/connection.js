@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const PORT = process.env.PORT || 3000;
-const BACKEND_HOST = process.env.BACKEND_HOST || 'http://backend-api';
+const BACKEND_HOST = process.env.BACKEND_HOST || 'http://localhost';
 const BACKEND_PORT = process.env.BACKEND_PORT || 8000;
 const BACKEND_URL = `${BACKEND_HOST}:${BACKEND_PORT}`;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/';

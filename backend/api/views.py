@@ -66,8 +66,6 @@ class PassViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data["password"] = encryptPass(owner.token, data["password"]).decode("utf-8")
         old_data = Pass.objects.get(id=pk)
-        if old_data.owner_id.id != owner_id:
-            return Response({"error": "user not authorized"}, status=401)
         old_data.delete()
         pass_serializer = PassSerializer(data=data)
         if pass_serializer.is_valid():
@@ -125,8 +123,6 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data["content"] = encryptPass(owner.token, data["content"]).decode("utf-8")
         old_data = SecNotes.objects.get(id=pk)
-        if old_data.owner_id.id != owner_id:
-            return Response({"error": "user not authorized"}, status=401)
         old_data.delete()
         pass_serializer = SecNotesSerializer(data=data)
         if pass_serializer.is_valid():
@@ -191,8 +187,6 @@ class CardsViewSet(viewsets.ModelViewSet):
         data["card_exp"] = encryptPass(owner.token, data["card_exp"]).decode("utf-8")
         data["card_cvv"] = encryptPass(owner.token, data["card_cvv"]).decode("utf-8")
         old_data = Cards.objects.get(id=pk)
-        if old_data.owner_id.id != owner_id:
-            return Response({"error": "user not authorized"}, status=401)
         old_data.delete()
         pass_serializer = CardsSerializer(data=data)
         if pass_serializer.is_valid():
