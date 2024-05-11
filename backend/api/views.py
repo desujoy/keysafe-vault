@@ -65,7 +65,11 @@ class PassViewSet(viewsets.ModelViewSet):
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
         data["password"] = encryptPass(owner.token, data["password"]).decode("utf-8")
-        pass_serializer = PassSerializer(data=request.data)
+        old_data = Pass.objects.get(id=pk)
+        if old_data.owner_id.id != owner_id:
+            return Response({"error": "user not authorized"}, status=401)
+        old_data.delete()
+        pass_serializer = PassSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
             return Response(pass_serializer.data, status=201)
@@ -120,7 +124,11 @@ class SecNotesViewSet(viewsets.ModelViewSet):
         owner = Users.objects.get(pk=owner_id)
         data = request.data.copy()
         data["content"] = encryptPass(owner.token, data["content"]).decode("utf-8")
-        pass_serializer = SecNotesSerializer(data=request.data)
+        old_data = SecNotes.objects.get(id=pk)
+        if old_data.owner_id.id != owner_id:
+            return Response({"error": "user not authorized"}, status=401)
+        old_data.delete()
+        pass_serializer = SecNotesSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
             return Response(pass_serializer.data, status=201)
@@ -182,7 +190,11 @@ class CardsViewSet(viewsets.ModelViewSet):
         )
         data["card_exp"] = encryptPass(owner.token, data["card_exp"]).decode("utf-8")
         data["card_cvv"] = encryptPass(owner.token, data["card_cvv"]).decode("utf-8")
-        pass_serializer = CardsSerializer(data=request.data)
+        old_data = Cards.objects.get(id=pk)
+        if old_data.owner_id.id != owner_id:
+            return Response({"error": "user not authorized"}, status=401)
+        old_data.delete()
+        pass_serializer = CardsSerializer(data=data)
         if pass_serializer.is_valid():
             pass_serializer.save()
             return Response(pass_serializer.data, status=201)
@@ -266,9 +278,9 @@ class FilesViewSet(viewsets.ModelViewSet):
             decrypted_file = BytesIO(decrypted_file_data)
             # print(decrypted_file.read())
             response = FileResponse(decrypted_file)
-            response[
-                "Content-Disposition"
-            ] = "attachment; filename=" + os.path.basename(file_path)
+            response["Content-Disposition"] = (
+                "attachment; filename=" + os.path.basename(file_path)
+            )
             return response
         else:
             return Response({"error": "file not found"}, status=404)
