@@ -20,7 +20,7 @@ router.use(fileupload());
 router.route("/").get(async (req, res) => {
   const { token } = req.cookies;
   if (!token) {
-    res.redirect("/login");
+    res.render("index.ejs", { user: null })
   } else {
     var username = jwt.verify(token, SECRET_KEY).username;
     const validated = await User.findOne({ username: username });
@@ -34,7 +34,7 @@ router.route("/").get(async (req, res) => {
 
 router.route("/logout").get(async (req, res) => {
   res.clearCookie("token");
-  res.redirect("/login");
+  res.redirect("/");
 });
 
 router

@@ -1,4 +1,104 @@
 <%- include('header.ejs') %>
+<style>
+    /* General body styling */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+    }
+
+    /* Form styling */
+    form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    /* Input fields styling */
+    button,
+    input[type="text"],
+    input[type="submit"],
+    input[type="button"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-sizing: border-box;
+        /* Include padding in width calculation */
+    }
+
+    /* Label styling */
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    /* Error message styling */
+    #error {
+        color: #ff0000;
+        margin-bottom: 20px;
+    }
+
+    /* Button styling */
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        background-color: #5cb85c;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover,
+    input[type="submit"]:hover,
+    input[type="button"]:hover {
+        background-color: #4cae4c;
+    }
+
+    /* Hide/Show button styling */
+    #show-button,
+    #hide-button {
+        background-color: #337ab7;
+        border-color: #2e6da4;
+    }
+
+    #show-button:hover,
+    #hide-button:hover {
+        background-color: #286090;
+        border-color: #204d74;
+    }
+
+    /* Edit button styling */
+    #edit-button {
+        background-color: #f0ad4e;
+        border-color: #eea236;
+    }
+
+    #edit-button:hover {
+        background-color: #ec971f;
+        border-color: #d58512;
+    }
+
+    /* Card container styling */
+    #data {
+        background-color: #e7e7e7;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    /* Header styling */
+    h1,
+    h2 {
+        color: #333;
+    }
+</style>
     <h1>Upload Files:</h1>
     <form action="/files" method="post" enctype="multipart/form-data">
         <div>

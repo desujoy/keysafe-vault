@@ -1,9 +1,39 @@
-<%- include('header.ejs') %>
+<% if(user){ %>
+    <%- include('header.ejs') %>
+        <% }else{ %>
+            <%- include('header_index.ejs') %>
+                <% } %>
+                    <style>
 
-<h1>Home</h1>
-<p><a href="/pass">pass</a></p>
-<p><a href="/cards">cards</a></p>
-<p><a href="/notes">notes</a></p>
-<p><a href="/files">files</a></p>
+                    </style>
+                    <!-- top banner -->
+                    <div class="top-banner">
+                        <div class="container">
 
-<%- include('footer.ejs') %>
+                            <div class="small-bold-text banner-text">KeySafe-Valut</div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- header -->
+                    <header>
+                        <div class="container header-section flex">
+                            <div class="header-left ">
+                                <h1>KeySafe-Valut</h1>
+                                <p>The Dedicated Key Safe Vault: A secure solution for managing digital assets. </p>
+                                <a href="#" class="primary-button ">Get Started</a>
+                            </div>
+                            <div class="header-right">
+                                <img src="/images/hero.jpg" alt="hero-image">
+                            </div>
+                        </div>
+                    </header>
+
+
+
+                    <!-- subfooter -->
+
+
+
+                    <%- include('footer.ejs') %>
